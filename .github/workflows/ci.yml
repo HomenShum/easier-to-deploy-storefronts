@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# What this validates: the template is installable from a fresh clone, the
+# Convex types compile against the committed schema, the lockfile isn't drifted.
+# It does NOT run the live site or hit external APIs — that requires real env
+# vars (RESEND_API_KEY etc.), which a public CI shouldn't have.
+#
+# When this turns red: a fork can't `git clone && npm install && npx convex dev`
+# without errors. That's the contract.
+jobs:
+  install:
+    name: Install + typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck Convex schema + functions
+        # `convex codegen` runs the type-generation pipeline against schema.ts
+        # and convex/* without needing an actual deployment. If schema or any
+        # public function has a TypeScript error, this fails.
+        run: npx convex codegen --typecheck enable
+        env:
+          # Codegen reads CONVEX_DEPLOYMENT for project metadata only — a placeholder
+          # name is fine because we're not pushing.
+          CONVEX_DEPLOYMENT: 'dev:ci-typecheck-only'
+
+      - name: Verify .env.example is syntactically clean
+        run: |
+          # Bail on KEY="value with spaces" (we use plain KEY=value)
+          if grep -E '^[A-Z_]+=".*"$' .env.example; then
+            echo "::error::.env.example contains quoted values — use bare KEY=value"
+            exit 1
+          fi
+          # Bail on any obvious secret prefixes that should never be checked in
+          if grep -E 're_[A-Za-z0-9_]{16,}|sk-[A-Za-z0-9]{20,}' .env.example; then
+            echo "::error::.env.example appears to contain a real key"
+            exit 1
+          fi
+          echo "✓ .env.example clean"
+
+      - name: Verify no PII / live deployment IDs in source
+        run: |
+          # Strings that should never appear after sanitization. Update this list
+          # if you fork — replace these with YOUR original deployment's identifiers.
+          for pattern in 'resilient-setter-417' 'pawpaw-pet-care.vercel.app' '1974yangao' 'hshum2018@gmail'; do
+            # Allow these strings inside CI workflow files (where they may appear as guard patterns)
+            # but flag them anywhere else.
+            hits=$(grep -rl "$pattern" --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.github . || true)
+            if [ -n "$hits" ]; then
+              echo "::error::Found '$pattern' in:"
+              echo "$hits"
+              exit 1
+            fi
+          done
+          echo "✓ no PII / live deployment identifiers in source"
