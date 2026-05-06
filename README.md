@@ -1,6 +1,6 @@
 # easier-to-deploy-storefronts
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![Stack](https://img.shields.io/badge/stack-Vercel%20%7C%20Convex%20%7C%20Resend%20%7C%20OpenRouter-purple)](#how-the-stack-divides-the-work) [![Auth](https://img.shields.io/badge/auth-magic--link%20(passwordless)-blue)](#auth-state-machine-passwordless-magic-link)
+[![CI](https://github.com/HomenShum/easier-to-deploy-storefronts/actions/workflows/ci.yml/badge.svg)](https://github.com/HomenShum/easier-to-deploy-storefronts/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![Stack](https://img.shields.io/badge/stack-Vercel%20%7C%20Convex%20%7C%20Resend%20%7C%20OpenRouter-purple)](#how-the-stack-divides-the-work) [![Auth](https://img.shields.io/badge/auth-magic--link%20(passwordless)-blue)](#auth-state-machine-passwordless-magic-link)
 
 A drop-in template that lets a developer **stand up a working storefront for a non-technical owner in an afternoon.** A pet-sitter, a tutor, a freelance editor, a mobile mechanic — they all need the same thing on the web side: a multilingual storefront, a single inbox, a way to update prices without calling a developer. This repo is that thing, packaged so the dev does the deploy and never has to log back in.
 
