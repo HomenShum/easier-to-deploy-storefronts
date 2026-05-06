@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:  # manual trigger from the Actions tab + via `gh workflow run`
 
 # What this validates: the template is installable from a fresh clone, the
 # Convex types compile against the committed schema, the lockfile isn't drifted.
