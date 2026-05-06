@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>OG Image Generator — Paw Paw Pet Care</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#333;padding:24px;font-family:"Inter",sans-serif;display:flex;flex-direction:column;align-items:center;gap:16px}
+  button{padding:12px 24px;border:0;border-radius:8px;background:#1e3a2e;color:#fff;font-weight:600;font-size:15px;cursor:pointer}
+  .hint{color:#ddd;font-size:13px;text-align:center}
+  #og{
+    width:1200px;height:630px;position:relative;overflow:hidden;
+    display:grid;grid-template-columns:1fr 1.1fr;
+    background:#faf6ee;box-shadow:0 20px 60px rgba(0,0,0,.4)
+  }
+  #og .photo{
+    background:url("hero.jpg") center 28% / cover no-repeat;
+    position:relative
+  }
+  #og .photo::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(to right,rgba(250,246,238,0) 65%,#faf6ee 100%)
+  }
+  #og .text{padding:72px 64px;display:flex;flex-direction:column;justify-content:center}
+  #og .brand{
+    display:inline-flex;align-items:center;gap:10px;
+    background:#1e3a2e;color:#fff;padding:8px 18px;border-radius:999px;
+    font-size:16px;font-weight:700;margin-bottom:28px;
+    align-self:flex-start;letter-spacing:.5px
+  }
+  #og h1{
+    font-family:"Fraunces",serif;font-size:72px;line-height:1.02;
+    color:#1a1f1c;letter-spacing:-.02em;margin-bottom:24px;font-weight:700
+  }
+  #og h1 em{font-style:italic;color:#d97757;font-weight:500}
+  #og .sub{font-size:24px;line-height:1.35;color:#5a5246;margin-bottom:32px;font-weight:500}
+  #og .meta{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+  #og .pill{background:#fff;border:1.5px solid #ebe2cc;padding:10px 18px;border-radius:999px;font-size:16px;font-weight:600;color:#1e3a2e}
+  #og .phone{font-family:"Fraunces",serif;font-size:28px;font-weight:700;color:#d97757}
+  @media (max-width:1280px){
+    #og{transform:scale(.6);transform-origin:top;margin-bottom:-252px}
+  }
+</style>
+</head>
+<body>
+<button onclick="download()">⬇ Download og.jpg (1200×630)</button>
+<p class="hint">Generates the social preview image (used when the site is shared on Facebook, iMessage, X/Twitter). Click Download, then replace og.jpg in the landing_page folder and redeploy.</p>
+
+<div id="og">
+  <div class="photo"></div>
+  <div class="text">
+    <span class="brand">🐾 PAW PAW PET CARE</span>
+    <h1>A calm home<br>for your dog —<br><em>not a kennel.</em></h1>
+    <p class="sub">Small, home-style dog boarding<br>in Castro Valley.</p>
+    <div class="meta">
+      <span class="pill">1–2 dogs at a time</span>
+      <span class="pill">Rescate + SF daycare certified</span>
+      <span class="phone">415-823-0199</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+async function download(){
+  const n = document.getElementById('og');
+  const prev = n.style.transform, mbprev = n.style.marginBottom;
+  n.style.transform = 'none'; n.style.marginBottom = '0';
+  await new Promise(r=>setTimeout(r,60));
+  const canvas = await html2canvas(n,{scale:1,useCORS:true,width:1200,height:630,backgroundColor:'#faf6ee'});
+  n.style.transform = prev; n.style.marginBottom = mbprev;
+  const a = document.createElement('a');
+  a.download = 'og.jpg';
+  a.href = canvas.toDataURL('image/jpeg', 0.92);
+  a.click();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Paw Paw Pet Care</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { color: #2c5530; margin-bottom: 10px; }
+    .subtitle { color: #666; margin-bottom: 30px; }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .card h2 {
+      margin: 0 0 16px;
+      font-size: 16px;
+      color: #444;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .metric:last-child { border-bottom: none; }
+    .metric-label { color: #666; }
+    .metric-value { font-weight: 600; color: #2c5530; }
+    
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .status.ok { background: #d4edda; color: #155724; }
+    .status.warn { background: #fff3cd; color: #856404; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    
+    .inquiry-item {
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .inquiry-from { font-weight: 600; color: #333; }
+    .inquiry-subject { color: #666; font-size: 14px; margin: 4px 0; }
+    .inquiry-snippet { color: #888; font-size: 13px; }
+    
+    .btn {
+      background: #2c5530;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 8px;
+    }
+    .btn:hover { background: #1e3d21; }
+    .btn-secondary {
+      background: #6c757d;
+    }
+    
+    .loading { color: #666; font-style: italic; }
+    .error { color: #dc3545; }
+    
+    .api-key-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-family: monospace;
+    }
+    
+    .feature-flag {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .toggle {
+      width: 48px;
+      height: 24px;
+      background: #ccc;
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+    }
+    .toggle.on { background: #2c5530; }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: 0.2s;
+    }
+    .toggle.on::after { left: 26px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🐾 Paw Paw Pet Care — Admin Dashboard</h1>
+    <p class="subtitle">Real-time operations, cost tracking, and agent status</p>
+    
+    <!-- API Key Login -->
+    <div class="card" id="login-card">
+      <h2>Authentication</h2>
+      <p>Enter admin API key to access dashboard:</p>
+      <input type="password" class="api-key-input" id="api-key" placeholder="ADMIN_API_KEY from Vercel env">
+      <button class="btn" onclick="loadDashboard()">Load Dashboard</button>
+    </div>
+    
+    <!-- System Status -->
+    <div class="grid" id="dashboard-grid" style="display:none">
+      <div class="card">
+        <h2>System Status</h2>
+        <div class="metric">
+          <span class="metric-label">Contact API</span>
+          <span class="status ok" id="status-contact">OK</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Gmail Agent</span>
+          <span class="status warn" id="status-gmail">Not Configured</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Calendar</span>
+          <span class="status warn" id="status-calendar">Not Configured</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Translation</span>
+          <span class="status ok" id="status-translation">Active</span>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h2>Cost Tracking (Today)</h2>
+        <div class="metric">
+          <span class="metric-label">Translation Cost</span>
+          <span class="metric-value" id="cost-today">$0.00</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">This Month</span>
+          <span class="metric-value" id="cost-month">$0.00</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Requests</span>
+          <span class="metric-value" id="req-count">—</span>
+        </div>
+        <button class="btn btn-secondary" onclick="refreshCosts()">Refresh</button>
+      </div>
+      
+      <div class="card">
+        <h2>Feature Flags</h2>
+        <div class="feature-flag">
+          <span>Auto-reply to inquiries</span>
+          <div class="toggle" id="flag-autoreply" onclick="toggleFlag('autoreply')"></div>
+        </div>
+        <div class="feature-flag">
+          <span>Calendar availability check</span>
+          <div class="toggle" id="flag-calendar" onclick="toggleFlag('calendar')"></div>
+        </div>
+        <div class="feature-flag">
+          <span>Translation enabled</span>
+          <div class="toggle on" id="flag-translation" onclick="toggleFlag('translation')"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Gmail Inquiries -->
+    <div class="card" id="inquiries-card" style="display:none">
+      <h2>Recent Gmail Inquiries</h2>
+      <button class="btn" onclick="loadInquiries()">Refresh Inquiries</button>
+      <div id="inquiries-list" style="margin-top: 16px">
+        <p class="loading">Click refresh to load inquiries...</p>
+      </div>
+    </div>
+    
+    <!-- Calendar -->
+    <div class="card" id="calendar-card" style="display:none">
+      <h2>Calendar Availability</h2>
+      <button class="btn" onclick="loadCalendar()">Check Availability</button>
+      <div id="calendar-list" style="margin-top: 16px">
+        <p class="loading">Click refresh to load calendar...</p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    let apiKey = localStorage.getItem('pawpaw_admin_key') || '';
+    
+    if (apiKey) {
+      document.getElementById('api-key').value = apiKey;
+      loadDashboard();
+    }
+    
+    function getApiKey() {
+      apiKey = document.getElementById('api-key').value;
+      localStorage.setItem('pawpaw_admin_key', apiKey);
+      return apiKey;
+    }
+    
+    async function loadDashboard() {
+      getApiKey();
+      document.getElementById('login-card').style.display = 'none';
+      document.getElementById('dashboard-grid').style.display = 'grid';
+      document.getElementById('inquiries-card').style.display = 'block';
+      document.getElementById('calendar-card').style.display = 'block';
+      
+      await Promise.all([
+        checkGmailStatus(),
+        refreshCosts()
+      ]);
+    }
+    
+    async function checkGmailStatus() {
+      try {
+        const res = await fetch('/api/gmail-agent?action=inquiries', {
+          headers: { 'x-api-key': apiKey }
+        });
+        const data = await res.json();
+        
+        if (data.ok) {
+          document.getElementById('status-gmail').textContent = 'Connected';
+          document.getElementById('status-gmail').className = 'status ok';
+          document.getElementById('status-calendar').textContent = 'Connected';
+          document.getElementById('status-calendar').className = 'status ok';
+        } else if (data.error === 'oauth_not_configured') {
+          // Expected - not configured yet
+        }
+      } catch (e) {
+        // Keep as "Not Configured"
+      }
+    }
+    
+    async function refreshCosts() {
+      // /api/admin/cost-tracking endpoint was removed (depended on @vercel/kv,
+      // never wired up in prod — see SECURITY_FIX_2026-04-29.md). Show placeholder
+      // so the dashboard stops 404-spamming the network tab.
+      const today = document.getElementById('cost-today');
+      const month = document.getElementById('cost-month');
+      const reqs = document.getElementById('req-count');
+      if (today) today.textContent = '—';
+      if (month) month.textContent = '—';
+      if (reqs) reqs.textContent = '—';
+    }
+    
+    async function loadInquiries() {
+      const list = document.getElementById('inquiries-list');
+      list.innerHTML = '<p class="loading">Loading...</p>';
+      
+      try {
+        const res = await fetch('/api/gmail-agent?action=inquiries', {
+          headers: { 'x-api-key': apiKey }
+        });
+        const data = await res.json();
+        
+        if (!data.ok) {
+          list.innerHTML = `<p class="error">${data.message || data.error}</p>
+            <p>Setup required: <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Create OAuth credentials</a> then visit <code>/api/gmail-auth-init</code></p>`;
+          return;
+        }
+        
+        if (data.inquiries.length === 0) {
+          list.innerHTML = '<p>No new inquiries found.</p>';
+          return;
+        }
+        
+        list.innerHTML = data.inquiries.map(i => `
+          <div class="inquiry-item">
+            <div class="inquiry-from">${escapeHtml(i.from)}</div>
+            <div class="inquiry-subject">${escapeHtml(i.subject)}</div>
+            <div class="inquiry-snippet">${escapeHtml(i.snippet)}</div>
+            ${i.guardrails?.passed === false ? '<span class="status error">Guardrails flagged</span>' : ''}
+          </div>
+        `).join('');
+        
+      } catch (e) {
+        list.innerHTML = `<p class="error">Failed to load: ${e.message}</p>`;
+      }
+    }
+    
+    async function loadCalendar() {
+      const list = document.getElementById('calendar-list');
+      list.innerHTML = '<p class="loading">Loading...</p>';
+      
+      try {
+        const res = await fetch('/api/gmail-agent?action=availability', {
+          headers: { 'x-api-key': apiKey }
+        });
+        const data = await res.json();
+        
+        if (!data.ok) {
+          list.innerHTML = `<p class="error">${data.message || data.error}</p>`;
+          return;
+        }
+        
+        if (data.availability.length === 0) {
+          list.innerHTML = '<p>No calendar data available.</p>';
+          return;
+        }
+        
+        const events = data.availability[0]?.events || [];
+        if (events.length === 0) {
+          list.innerHTML = '<p>No upcoming events.</p>';
+          return;
+        }
+        
+        list.innerHTML = events.slice(0, 10).map(e => `
+          <div class="inquiry-item">
+            <div class="inquiry-from">${escapeHtml(e.summary)}</div>
+            <div class="inquiry-subject">${new Date(e.start).toLocaleString()} — ${new Date(e.end).toLocaleString()}</div>
+            <div class="inquiry-snippet">Status: ${e.status}</div>
+          </div>
+        `).join('');
+        
+      } catch (e) {
+        list.innerHTML = `<p class="error">Failed to load: ${e.message}</p>`;
+      }
+    }
+    
+    function toggleFlag(flag) {
+      const el = document.getElementById('flag-' + flag);
+      el.classList.toggle('on');
+      // In real implementation, this would POST to an API
+      console.log('Flag', flag, 'toggled to', el.classList.contains('on'));
+    }
+    
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+  </script>
+</body>
+</html>

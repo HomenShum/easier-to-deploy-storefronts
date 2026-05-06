@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#1e3a2e" />
+<title>Thank You — Paw Paw Pet Care</title>
+<meta name="description" content="A little thank-you memory from your dog's stay with Paw Paw Pet Care." />
+<meta name="robots" content="noindex,nofollow" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🐾%3C/text%3E%3C/svg%3E" />
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Thank You — Paw Paw Pet Care" />
+<meta property="og:description" content="A memory from a dog's stay with Paw Paw Pet Care in Castro Valley." />
+<meta property="og:image" content="https://<your-app>.vercel.app/og.jpg" />
+
+<style>
+  :root {
+    --ink: #1e3a2e;
+    --cream: #fdf7ed;
+    --sage: #4a7c59;
+    --terra: #c85e3c;
+    --gold: #d4a574;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, 'PingFang SC', 'Noto Sans SC', sans-serif;
+    background:
+      radial-gradient(circle at 20% -10%, #fff6e3 0%, transparent 40%),
+      radial-gradient(circle at 90% 10%, #e8f2ec 0%, transparent 40%),
+      var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    line-height: 1.55;
+  }
+  .card {
+    max-width: 480px;
+    width: 100%;
+    background: white;
+    border-radius: 22px;
+    padding: 40px 32px 32px;
+    box-shadow: 0 30px 70px -30px rgba(30, 58, 46, 0.28);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '🐾';
+    position: absolute;
+    font-size: 140px;
+    opacity: 0.05;
+    top: -20px;
+    right: -20px;
+    transform: rotate(18deg);
+  }
+  .paw {
+    display: inline-block;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), #e3bc8a);
+    font-size: 36px;
+    line-height: 68px;
+    box-shadow: 0 8px 24px -10px rgba(212, 165, 116, 0.55);
+    margin-bottom: 16px;
+  }
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--sage);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 30px;
+    font-weight: 600;
+    margin: 8px 0 10px;
+    line-height: 1.15;
+  }
+  h1 em { font-style: italic; color: var(--sage); }
+  .stay-meta {
+    background: #f5f5f0;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin: 20px 0;
+    font-size: 14px;
+    color: var(--ink);
+    text-align: left;
+  }
+  .stay-meta .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  .stay-meta .row + .row { border-top: 1px solid rgba(30, 58, 46, 0.08); }
+  .stay-meta .k { color: var(--sage); font-size: 12px; }
+  .stay-meta .v { font-weight: 500; }
+  .note {
+    font-size: 14px;
+    color: var(--ink);
+    margin: 16px 0;
+    line-height: 1.6;
+  }
+  .note em { color: var(--terra); font-style: normal; font-weight: 500; }
+  .cta-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 24px 0 10px;
+  }
+  .cta {
+    padding: 11px 22px;
+    border-radius: 10px;
+    border: 1px solid rgba(30, 58, 46, 0.2);
+    background: white;
+    font-size: 14px;
+    color: var(--ink);
+    text-decoration: none;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .cta:hover { background: #f5f5f0; }
+  .cta.primary { background: var(--ink); color: white; border-color: var(--ink); }
+  .cta.primary:hover { background: #2a5440; }
+  .footer {
+    font-size: 12px;
+    color: var(--sage);
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(30, 58, 46, 0.08);
+  }
+  .footer a { color: var(--terra); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+  .error {
+    text-align: center;
+    color: var(--sage);
+    font-size: 14px;
+  }
+  .error h1 { font-size: 22px; }
+  .loading { font-size: 14px; color: var(--sage); }
+
+  @media (max-width: 480px) {
+    .card { padding: 32px 24px 24px; }
+    h1 { font-size: 24px; }
+    .paw { width: 56px; height: 56px; font-size: 30px; line-height: 56px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card" id="card">
+  <p class="loading">Loading…</p>
+</div>
+
+<script>
+  const SITE = 'https://<your-app>.vercel.app';
+
+  function fmtDate(ms) {
+    const d = new Date(ms);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function serviceLabel(s) {
+    return ({ boarding: 'Overnight boarding', daycare: 'Daycare', walk: 'Dog walking', dropin: 'Drop-in visit' }[s] || 'A stay');
+  }
+
+  function renderError(msg) {
+    document.getElementById('card').innerHTML = `
+      <div class="error">
+        <div class="paw">🐾</div>
+        <h1>This memory has moved on</h1>
+        <p>${msg}</p>
+        <a class="cta primary" href="${SITE}/" style="margin-top:20px">Visit Paw Paw Pet Care</a>
+      </div>`;
+    document.title = 'Paw Paw Pet Care';
+  }
+
+  function renderStay(stay) {
+    const firstName = stay.firstName || 'friend';
+    const dog = stay.dogName || 'your dog';
+    const start = fmtDate(stay.startMs);
+    const end = fmtDate(stay.endMs);
+    const sameDay = start === end;
+    const dateStr = sameDay ? start : `${start} – ${end}`;
+    const svc = serviceLabel(stay.service);
+
+    document.title = `${dog}'s stay with Paw Paw Pet Care 🐾`;
+    document.getElementById('card').innerHTML = `
+      <div class="paw">🐾</div>
+      <span class="eyebrow">A memory from</span>
+      <h1>${escapeHtml(dog)}'s stay<br /><em>at Paw Paw Pet Care</em></h1>
+      <div class="stay-meta">
+        <div class="row"><span class="k">Guest</span><span class="v">${escapeHtml(dog)}</span></div>
+        <div class="row"><span class="k">Dates</span><span class="v">${escapeHtml(dateStr)}</span></div>
+        <div class="row"><span class="k">Service</span><span class="v">${escapeHtml(svc)}</span></div>
+        <div class="row"><span class="k">Host</span><span class="v">Yan · Castro Valley</span></div>
+      </div>
+      <p class="note">
+        Thanks for trusting us with ${escapeHtml(dog)}, <strong>${escapeHtml(firstName)}</strong>. It was a pleasure to have them — safe, well-fed, and plenty of walks.
+        <br /><br />
+        <em>Feel free to share this page with family who might want to know where ${escapeHtml(dog)} was staying.</em>
+      </p>
+      <div class="cta-row">
+        <button class="cta" onclick="shareThisPage()">📤 Share</button>
+        <a class="cta primary" href="${SITE}/">Got another dog? Book a stay</a>
+      </div>
+      <div class="footer">
+        Paw Paw Pet Care · Small home dog boarding in Castro Valley, CA<br />
+        📞 <a href="tel:+14158230199">415-823-0199</a> · <a href="${SITE}/"><your-app>.vercel.app</a>
+      </div>`;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
+  async function shareThisPage() {
+    const url = location.href;
+    const title = document.title;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url });
+        return;
+      }
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+        alert('Link copied — paste it in your message to share.');
+        return;
+      }
+      prompt('Copy this link:', url);
+    } catch (_) {}
+  }
+
+  (async function init() {
+    const params = new URLSearchParams(location.search);
+    const token = (params.get('t') || '').trim();
+    if (!token) { renderError("No stay token in the URL. Check that you copied the full link."); return; }
+    try {
+      const res = await fetch(`/api/bookings?view=public&id=${encodeURIComponent(token)}`);
+      if (!res.ok) throw new Error('network');
+      const body = await res.json();
+      if (!body.ok || !body.stay) {
+        renderError(body.error === 'cancelled' ? "This stay was cancelled." : "We couldn't find this stay.");
+        return;
+      }
+      renderStay(body.stay);
+    } catch (err) {
+      renderError("Couldn't load this stay. Try refreshing, or visit the main site.");
+    }
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,3912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>泡泡 Paw Paw — Mom's Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-primary: #faf9f7;
+      --bg-secondary: #f0efe9;
+      --accent: #2c5530;
+      --accent-light: #e8f5e9;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666;
+      --border: #e5e4df;
+      --bubble-ai: #f0efe9;
+      --bubble-user: #2c5530;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'PingFang SC', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* Login */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .login-card {
+      background: white;
+      padding: 48px;
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+      width: 400px;
+      text-align: center;
+    }
+    .login-card .logo {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #2c5530, #4a9d50);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 32px;
+    }
+    .login-card h1 { font-size: 24px; margin-bottom: 8px; }
+    .login-card p { color: var(--text-secondary); margin-bottom: 32px; }
+    .login-input {
+      width: 100%;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 16px;
+      margin-bottom: 16px;
+      font-family: monospace;
+      background: var(--bg-secondary);
+    }
+    .login-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .login-btn:hover { opacity: 0.9; }
+    
+    /* Main App */
+    .app { display: none; height: 100vh; }
+    .app.logged-in { display: flex; }
+    
+    /* Left Sidebar - Chat Agent */
+    .chat-panel {
+      width: 380px;
+      background: white;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .chat-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .agent-avatar {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #2c5530, #4a9d50);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    .agent-info h2 { font-size: 16px; font-weight: 600; }
+    .agent-info p { font-size: 13px; color: var(--text-secondary); }
+    
+    .mode-toggle {
+      margin-left: auto;
+      display: flex;
+      background: var(--bg-secondary);
+      padding: 4px;
+      border-radius: 20px;
+    }
+    .mode-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 16px;
+      font-size: 12px;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-secondary);
+    }
+    .mode-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .message {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .message-ai {
+      background: var(--bubble-ai);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+    .message-user {
+      background: var(--bubble-user);
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .quick-action {
+      padding: 8px 14px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-action:hover {
+      background: var(--accent-light);
+      border-color: var(--accent);
+    }
+    
+    .chat-input {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .input-container {
+      display: flex;
+      gap: 12px;
+      background: var(--bg-secondary);
+      padding: 8px;
+      border-radius: 24px;
+      align-items: flex-end;
+    }
+    .chat-textarea {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 8px 12px;
+      font-size: 14px;
+      resize: none;
+      max-height: 120px;
+      outline: none;
+      font-family: inherit;
+    }
+    .chat-send {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .chat-send:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    
+    /* Right Panel - Inquiry Details */
+    .content-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-primary);
+    }
+    
+    .content-header {
+      padding: 20px 32px;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .breadcrumb {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .breadcrumb strong { color: var(--text-primary); font-weight: 500; }
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .header-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      background: white;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header-btn.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 0 32px;
+      background: white;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      padding: 16px 24px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .tab.active {
+      color: var(--text-primary);
+      border-bottom-color: var(--accent);
+      font-weight: 500;
+    }
+    .tab-badge {
+      background: #dc3545;
+      color: white;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-left: 6px;
+    }
+    
+    .tab-content {
+      flex: 1;
+      padding: 24px 32px;
+      overflow-y: auto;
+    }
+    
+    /* Inquiry Card */
+    .inquiry-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .inquiry-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .inquiry-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+    
+    .inquiry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .inquiry-name { font-size: 16px; font-weight: 600; }
+    .utm-tag { background: #f3f4f6; color: #374151; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+    .xlate-toggle {
+      display: flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin: 8px 0;
+      font-size: 13px;
+      color: #1e3a8a;
+      cursor: pointer;
+    }
+    .xlate-toggle:hover { background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+    .xlate-toggle input { accent-color: #2563eb; width: 16px; height: 16px; }
+    .xlate-toggle strong { color: #1e40af; }
+    .inquiry-time { font-size: 12px; color: var(--text-secondary); }
+    .inquiry-status {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .status-new { background: #fff3cd; color: #856404; }
+    .status-replied { background: #d4edda; color: #155724; }
+    
+    .inquiry-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .inquiry-preview {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.5;
+      display: -webkit-box;
+      display: box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    /* Detail View */
+    .detail-view {
+      display: none;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+    .detail-view.active { display: block; }
+    
+    .detail-header {
+      padding: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .detail-meta {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .meta-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; }
+    .meta-value { font-size: 14px; font-weight: 500; }
+    
+    .detail-content {
+      padding: 32px;
+    }
+    .message-thread {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .thread-message {
+      padding: 16px;
+      border-radius: 12px;
+      max-width: 80%;
+    }
+    .thread-inbound {
+      background: var(--bg-secondary);
+      align-self: flex-start;
+    }
+    .thread-outbound {
+      background: var(--accent);
+      color: white;
+      align-self: flex-end;
+    }
+    .thread-time { font-size: 12px; opacity: 0.7; margin-top: 8px; }
+    
+    .reply-box {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .reply-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .reply-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+    
+    /* Template Chips */
+    .templates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .template-chip {
+      padding: 6px 12px;
+      background: var(--accent-light);
+      color: var(--accent);
+      border-radius: 16px;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .template-chip:hover {
+      border-color: var(--accent);
+    }
+    
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: var(--text-secondary);
+    }
+    
+    /* Empty state — warm, forward-looking, gives mom agency */
+    .empty-state { padding: 40px 32px 48px; }
+    .es-hero { text-align:center; padding: 24px 0 20px; }
+    .es-hero .pawprint {
+      display:inline-block;
+      width:72px; height:72px;
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border-radius: 50%;
+      font-size: 38px;
+      line-height: 72px;
+      box-shadow: 0 8px 24px -10px rgba(217,119,6,.4);
+    }
+    .es-hero h2 { font-size: 22px; margin: 18px 0 4px; font-weight: 600; color:#111; }
+    .es-hero p { font-size: 14px; color: var(--text-secondary); margin: 0; }
+    .es-stats {
+      display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;
+      margin: 22px 0;
+    }
+    .es-stat {
+      background:white; border:1px solid var(--border); border-radius:12px;
+      padding: 14px 12px; text-align:center;
+    }
+    .es-stat .n { font-size:22px; font-weight:600; color:#111; line-height:1.1; }
+    .es-stat .l { font-size:11px; color:var(--text-secondary); margin-top:4px; text-transform:uppercase; letter-spacing:.03em; }
+    .es-stat.accent .n { color:#16a34a; }
+    .es-next {
+      background: linear-gradient(135deg, #f0fdf4, white);
+      border: 1px solid #86efac; border-radius: 12px;
+      padding: 14px 16px; margin: 0 0 18px;
+    }
+    .es-next .k { font-size:11px; color:#16a34a; text-transform:uppercase; letter-spacing:.04em; font-weight:600; margin-bottom:4px; }
+    .es-next .v { font-size:14px; color:#111; font-weight:500; }
+    .es-next .when { font-size:12px; color:var(--text-secondary); margin-top:4px; }
+    .es-actions {
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+      margin: 18px 0 22px;
+    }
+    .es-action {
+      display:inline-flex; align-items:center; gap:6px;
+      padding: 10px 16px; border-radius: 10px;
+      background:white; border:1px solid var(--border);
+      font-size:13px; color:#111; cursor:pointer;
+      transition: background .15s, transform .1s;
+    }
+    .es-action:hover { background: var(--bg-secondary); }
+    .es-action:active { transform: translateY(1px); }
+    .es-action.primary { background:#111; color:white; border-color:#111; }
+    .es-action.primary:hover { background:#333; }
+    .es-tip {
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      line-height: 1.55;
+      border-left: 3px solid #f59e0b;
+    }
+    .es-tip .k { font-size:11px; color:#92400e; text-transform:uppercase; letter-spacing:.04em; font-weight:600; margin-bottom:4px; display:block; }
+    .es-first-time { font-size:13px; line-height:1.7; color: var(--text-primary); margin: 12px 0 20px; }
+    .es-first-time li { margin: 4px 0; list-style: none; padding-left: 0; }
+    .es-first-time li::before { content:'✓ '; color:#16a34a; font-weight:600; }
+
+    /* Pending review-request widget */
+    .es-reviews {
+      background: linear-gradient(135deg, #fefce8, #fef9c3);
+      border: 1px solid #fde68a;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 4px 0 18px;
+    }
+    .es-reviews-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .es-reviews-head .k { font-size: 13px; font-weight: 600; color: #713f12; }
+    .es-reviews-head .n { font-size: 11px; background: #713f12; color: white; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+    .rev-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-top: 1px solid rgba(113, 63, 18, .15);
+      font-size: 13px;
+      color: #111;
+    }
+    .rev-row:first-of-type { border-top: 0; }
+    .rev-row-main { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rev-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .rev-ask {
+      background: #16a34a; color: white; border: 0;
+      padding: 6px 10px; border-radius: 6px;
+      font-size: 12px; cursor: pointer;
+    }
+    .rev-ask:hover { background: #15803d; }
+    .rev-skip {
+      background: transparent; color: #6b7280; border: 0;
+      padding: 6px 10px; border-radius: 6px;
+      font-size: 12px; cursor: pointer;
+    }
+    .rev-skip:hover { color: #111; }
+    .es-reviews-note {
+      font-size: 11px;
+      color: #713f12;
+      margin: 10px 0 0;
+      line-height: 1.5;
+    }
+
+    /* First-time onboarding tour */
+    .tour-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      display: none;
+      align-items: center; justify-content: center;
+      z-index: 1100;
+      padding: 20px;
+    }
+    .tour-backdrop.open { display: flex; }
+    .tour-card {
+      background: white;
+      border-radius: 16px;
+      max-width: 440px; width: 100%;
+      padding: 28px 28px 20px;
+      box-shadow: 0 30px 60px -20px rgba(0,0,0,.3);
+      position: relative;
+    }
+    .tour-close {
+      position: absolute; top: 12px; right: 14px;
+      background: none; border: 0;
+      font-size: 20px; color: #9ca3af; cursor: pointer;
+      padding: 4px 8px;
+    }
+    .tour-close:hover { color: #111; }
+    .tour-emoji {
+      font-size: 42px;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .tour-title { font-size: 20px; font-weight: 600; color: #111; margin: 0 0 6px; }
+    .tour-sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 14px; }
+    .tour-body { font-size: 14px; line-height: 1.65; color: var(--text-primary); margin: 0 0 18px; }
+    .tour-body strong { color: #111; }
+    .tour-body ul { padding-left: 20px; margin: 8px 0; }
+    .tour-body li { margin: 3px 0; }
+    .tour-dots {
+      display: flex; gap: 6px; justify-content: center; margin: 18px 0 14px;
+    }
+    .tour-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #e5e7eb;
+      transition: background .15s, transform .15s;
+    }
+    .tour-dot.active { background: #111; transform: scale(1.3); }
+    .tour-actions {
+      display: flex; gap: 10px; justify-content: space-between;
+      align-items: center;
+    }
+    .tour-btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: white;
+      font-size: 13px;
+      cursor: pointer;
+      color: #111;
+    }
+    .tour-btn:hover { background: var(--bg-secondary); }
+    .tour-btn.primary { background: #111; color: white; border-color: #111; }
+    .tour-btn.primary:hover { background: #333; }
+    .tour-skip {
+      background: none; border: 0; cursor: pointer;
+      color: #9ca3af; font-size: 12px;
+      text-decoration: underline;
+    }
+    .tour-skip:hover { color: #111; }
+
+    /* Share pitch tabs */
+    .share-tab {
+      padding: 7px 12px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: white;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: background .15s;
+    }
+    .share-tab:hover { background: var(--bg-secondary); }
+    .share-tab.active {
+      background: #111; color: white; border-color: #111;
+    }
+    
+    /* Typing indicator */
+    .typing {
+      display: flex;
+      gap: 4px;
+      padding: 16px;
+    }
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--text-secondary);
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login -->
+  <div class="login-overlay" id="login-overlay">
+    <div class="login-card">
+      <div class="logo">🐾</div>
+      <h1>泡泡 Paw Paw</h1>
+      <p style="margin-bottom:24px;">登录管理后台 / Sign in to admin</p>
+
+      <!-- Primary: passwordless magic-link login. Mom types her email, we mail
+           her a one-click URL via Resend. /api/auth/verify exchanges that link
+           for a 30-day ses_<hex> token stored in localStorage["pawpaw_inbox_key"]
+           — same slot the legacy raw key used to occupy. She never sees a key. -->
+      <input type="email" class="login-input" id="login-email-input" placeholder="owner@example.com" autocomplete="email">
+      <button class="login-btn" id="login-magic-btn" onclick="requestMagicLink()">📧 发送登录链接 / Send login link</button>
+      <p id="login-magic-msg" style="margin-top:10px;color:#1e3a2e;font-size:12px;min-height:1em;line-height:1.5;text-align:left;white-space:pre-line;"></p>
+
+      <!-- Break-glass / dev access. Hidden behind a disclosure so mom never
+           sees the raw key field. Server-side scripts (bulk uploads, cron) and
+           dev sign-in still work via this path. -->
+      <details style="margin-top:24px;text-align:left;">
+        <summary style="cursor:pointer;color:#888;font-size:12px;text-align:center;list-style:none;">高级登录 / Advanced sign-in</summary>
+        <div style="margin-top:14px;">
+          <input type="password" class="login-input" id="api-key-input" placeholder="管理员密钥 / Admin key">
+          <button class="login-btn" onclick="login()" style="margin-top:8px;background:#666;">使用密钥登录 / Sign in with key</button>
+          <p id="login-error" style="margin-top:10px;color:#b5381b;font-size:13px;min-height:1em"></p>
+        </div>
+      </details>
+
+      <p style="margin-top:18px;color:#888;font-size:11px">需要帮助？发短信给 Homen / Need help? Text Homen.</p>
+    </div>
+  </div>
+
+  <!-- Sessions modal — opened by the 🚪 button in chat-header. Lists every
+       active ses_ token bound to the caller's email, with per-row revoke and
+       a "sign out everywhere" footer. Hidden by default; populated on open. -->
+  <div id="sessions-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:white;padding:32px;border-radius:16px;width:480px;max-width:92vw;max-height:80vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,.15);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <h2 style="margin:0;font-size:20px;color:#1e3a2e;">已登录设备 / Signed-in devices</h2>
+        <button onclick="closeSessionsModal()" style="background:none;border:0;font-size:22px;cursor:pointer;color:#888;line-height:1;">✕</button>
+      </div>
+      <p id="sessions-modal-email" style="margin:0 0 18px;color:#666;font-size:13px;"></p>
+      <div id="sessions-list" style="border-top:1px solid #eee;"></div>
+      <div style="margin-top:18px;padding-top:16px;border-top:1px solid #eee;display:flex;flex-direction:column;gap:10px;">
+        <button onclick="signOutCurrent()" style="padding:10px 16px;border:1px solid #ccc;background:white;border-radius:8px;cursor:pointer;font-size:14px;">🚪 登出此设备 / Sign out this device</button>
+        <button onclick="signOutAll()" style="padding:10px 16px;border:0;background:#b5381b;color:white;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">🚨 登出所有设备 / Sign out everywhere</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Main App -->
+  <div class="app" id="app">
+    <!-- Left: Chat Panel -->
+    <div class="chat-panel">
+      <div class="chat-header">
+        <div class="agent-avatar">🐾</div>
+        <div class="agent-info">
+          <h2>泡泡 Paw Paw</h2>
+          <p>AI 助手 • 在线</p>
+        </div>
+        <div class="mode-toggle">
+          <button class="mode-btn active" onclick="setMode('assist')">Assist</button>
+          <button class="mode-btn" onclick="setMode('autopilot')">Auto</button>
+        </div>
+        <!-- Account / sessions trigger. Opens the modal with logged-in devices
+             and sign-out controls. Always visible after login. -->
+        <button onclick="openSessionsModal()" title="账户 / Account" style="margin-left:8px;padding:6px 10px;background:rgba(255,255,255,.18);color:white;border:0;border-radius:8px;cursor:pointer;font-size:14px;">🚪</button>
+      </div>
+      
+      <div class="chat-messages" id="chat-messages">
+        <div class="message message-ai">
+          您好，妈妈！我是泡泡 Paw Paw，您的智能助手。🐾<br><br>
+          我可以帮您：<br>
+          • 查看新的客户咨询<br>
+          • 帮您回复客户消息<br>
+          • 提醒待办事项<br>
+          • 安排见面时间<br><br>
+          有什么我可以帮您的吗？
+          <div class="quick-actions">
+            <button class="quick-action" onclick="askAgent('showNewInquiries')">🔴 查看新咨询</button>
+            <button class="quick-action" onclick="askAgent('showStats')">📊 查看统计</button>
+            <button class="quick-action" onclick="askAgent('helpReply')">✍️ 帮我回复</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="chat-input">
+        <div class="input-container">
+          <textarea class="chat-textarea" id="chat-input" placeholder="问泡泡任何问题..." rows="1"></textarea>
+          <button class="chat-send" onclick="sendChat()" id="chat-send">➤</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right: Content Panel -->
+    <div class="content-panel">
+      <div class="content-header">
+        <div class="breadcrumb">收件箱 / <strong>客户咨询</strong></div>
+        <div class="header-actions">
+          <button class="header-btn" onclick="refreshData()">🔄 刷新</button>
+          <button class="header-btn" id="sound-toggle" onclick="toggleSound()" title="提示音：开" style="font-size:16px;padding:6px 10px">🔔</button>
+          <button class="header-btn primary" onclick="markAllRead()">全部已读</button>
+        </div>
+      </div>
+      
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('inquiries')">咨询列表</div>
+        <div class="tab" onclick="switchTab('calendar')">日历</div>
+        <div class="tab" onclick="switchTab('stats')">统计</div>
+        <div class="tab" onclick="switchTab('cms')">🎨 编辑网站</div>
+      </div>
+      
+      <div class="tab-content" id="tab-content">
+        <div class="loading" id="loading">加载中...</div>
+        <div id="inquiries-list" style="display:none"></div>
+        <div class="empty-state" id="empty-state" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // === Magic-link auto-login (mom-friction killer) ===
+    // If URL has ?key=<value>, store it in localStorage and scrub the URL.
+    // Mom clicks one link in iMessage → logged in forever on this device.
+    (function autoLoginFromUrl() {
+      try {
+        const params = new URLSearchParams(location.search);
+        const k = (params.get('key') || '').trim();
+        if (k && k.length >= 8) {
+          localStorage.setItem('pawpaw_inbox_key', k);
+          params.delete('key');
+          const clean = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+          history.replaceState({}, '', clean);
+        }
+      } catch (_) { /* old browser, ignore */ }
+    })();
+    let apiKey = localStorage.getItem('pawpaw_inbox_key') || '';
+    let currentMode = 'assist';
+    let inquiries = [];
+    let confirmedBookings = []; // from Convex `bookings` table — authoritative
+    let externalBlocks = []; // from /api/ical-proxy if user has set up personal calendar sync
+    let pendingReviews = []; // bookings ended ~24hr ago, contact is phone, awaiting mom's SMS handoff
+    let cmsContent = { en: null, zh: null, es: null };
+    let cmsActiveLang = 'en';
+    let cmsDirty = false;
+    const ICAL_URL_KEY = 'pawpaw_personal_ical_url';
+    let selectedInquiry = null;
+    
+    const agentResponses = {
+      showNewInquiries: '正在为您查看新咨询...',
+      showStats: '今天收到了 {count} 个新咨询，{unreplied} 个需要回复。',
+      helpReply: '好的，点击任意咨询卡片，我可以在旁边帮您草拟回复。',
+      greeting: '您好！我是泡泡 Paw Paw，有什么可以帮您？',
+      prices: '我们的价格是：小型犬日托$35/天，过夜$50/晚。中型犬$40-45/天，过夜$60-70/晚。',
+      vaccines: '需要查看狂犬病、DHPP、犬咳疫苗记录。',
+      availability: '请问客户需要哪几天？我可以帮您查看是否有空。',
+      default: '我明白了。您可以点击右边的咨询卡片来查看详情并回复客户。'
+    };
+    
+    // Reply templates. Supports {name}, {dates}, {dog} placeholders filled from the
+    // selected inquiry when available. Keep these short — mom tweaks after filling.
+    const templates = {
+      greeting: '{name} 您好！感谢您联系 Paw Paw Pet Care。我是 Yan，请问有什么可以帮您？',
+      prices: '{name} 您好！我们的价格是：\n• 小型犬 (25 磅以下)：日托 $35/天，过夜 $50/晚\n• 中型犬 (25-45 磅)：日托 $40-45/天，过夜 $60-70/晚\n• 遛狗 $20/次，上门探望 $18/次\n所有价格含喂食、散步、陪伴和每日照片。主要节日加 50%。',
+      meet: '{name} 您好！欢迎先带 {dog} 来免费见面 15-20 分钟，让他/她熟悉环境。您 {dates} 之前哪天方便？',
+      vaccines: '{name} 您好！寄养需要以下疫苗记录：\n1. 狂犬病 (Rabies)\n2. DHPP (犬瘟/细小/副流感/腺病毒)\n3. 犬咳 (Bordetella)\n请在寄养当天带上疫苗本或兽医证明。',
+      availability: '{name} 您好！感谢您的咨询。请问您需要哪几天的寄养服务？另外也请告诉我 {dog} 的体型和特殊照顾需求。',
+      booked: '{name} 您好！{dates} 的预订已确认 ✅\n请记得：\n1. 带疫苗记录\n2. 带平时吃的狗粮（我们保持原作息）\n3. 告知特殊药物/过敏情况\n期待见到 {dog}！',
+      deposit: '{name} 您好！确认预订 {dates} 需要 $25 定金。\n请 Zelle 到 415-823-0199（收款人：Yan）。\n转账后截图给我，我就正式锁定档期。',
+      soldout: '{name} 您好，抱歉 {dates} 已经满了 🙏\n建议：提前几天或晚几天送来？或者我可以推荐另一家东湾靠谱的寄养。\n下次提前预订的话我优先给您留位置。',
+      pickup: '{name} 您好！想确认一下 {dog} 的接取时间。您大概 {dates} 几点方便来？我这边 8 AM – 8 PM 都可以。',
+      photo: '{dog} 今天状态很好 📸\n吃得好、散步开心、没哭闹。附上今天的照片～',
+      meetconfirm: '{name} 您好！明天见面的时间定了吗？Castro Valley 地址：[地址]。停车就停在街边就行。带上 {dog} 直接敲门～',
+    };
+
+    // Fill {name}/{dates}/{dog} from the currently-selected inquiry.
+    function fillTemplateVars(text) {
+      if (!selectedInquiry) return text;
+      const name = selectedInquiry.name || '您';
+      const dates = selectedInquiry.dates || '这几天';
+      const dog = selectedInquiry.dog ? selectedInquiry.dog.split(/[,，]/)[0] : '狗狗';
+      return text
+        .replace(/\{name\}/g, name)
+        .replace(/\{dates\}/g, dates)
+        .replace(/\{dog\}/g, dog);
+    }
+    
+    // Auto-login only if we have a cached key. refreshData() will clear it if 401.
+    // CRITICAL: defer login() — its body references module-level const/let declared
+    // FURTHER DOWN this script (SOUND_KEY ~L1147, _baseTitle ~L1206, CMS_DEFAULTS ~L1256,
+    // _lastAgentText ~L2101, calendarCursor ~L2274). Calling login() synchronously here
+    // would throw TDZ ReferenceError because those declarations haven't executed yet.
+    // setTimeout(0) pushes to the macrotask queue → fires after this whole script block
+    // finishes top-to-bottom → all let/const are initialized by then.
+    if (apiKey) {
+      const _input = document.getElementById('api-key-input');
+      if (_input) _input.value = apiKey;
+      setTimeout(login, 0);
+    }
+    // Allow pressing Enter in the login input
+    const _keyInput = document.getElementById('api-key-input');
+    if (_keyInput) _keyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+    
+    function login() {
+      apiKey = document.getElementById('api-key-input').value;
+      if (!apiKey) return;
+
+      localStorage.setItem('pawpaw_inbox_key', apiKey);
+      document.getElementById('login-overlay').style.display = 'none';
+      document.getElementById('app').classList.add('logged-in');
+      refreshData();
+      renderSoundToggle();
+      // Show the first-time onboarding tour once — skipped on subsequent sessions.
+      if (!localStorage.getItem('pawpaw_onboarding_seen')) {
+        // Defer so the app DOM finishes layout before the modal centers on it.
+        setTimeout(showOnboardingTour, 400);
+      }
+    }
+
+    // ============== SESSIONS / ACCOUNT MGMT ==============
+    // Opens the modal, fetches active sessions for the caller's email, renders
+    // them with per-row ✕ revoke. The "current device" row is highlighted so
+    // mom knows which one is hers — Convex returns last-6 token chars; the
+    // current ses_ token in localStorage carries the same suffix.
+    async function openSessionsModal() {
+      const modal = document.getElementById('sessions-modal');
+      const list = document.getElementById('sessions-list');
+      const emailEl = document.getElementById('sessions-modal-email');
+      modal.style.display = 'flex';
+      list.innerHTML = '<div style="padding:18px;text-align:center;color:#888;">加载中… / Loading…</div>';
+      emailEl.textContent = '';
+      try {
+        const r = await fetch('/api/auth/sessions', {
+          headers: { 'x-api-key': apiKey || '' },
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.ok) {
+          list.innerHTML = '<div style="padding:18px;color:#b5381b;">加载失败 / Failed to load: ' + (j.error || r.status) + '</div>';
+          return;
+        }
+        emailEl.textContent = '邮箱 / Email: ' + (j.email || '—');
+        const currentSuffix = (apiKey || '').slice(-6);
+        if (!j.sessions || j.sessions.length === 0) {
+          list.innerHTML = '<div style="padding:18px;text-align:center;color:#888;">暂无登录设备 / No active sessions</div>';
+          return;
+        }
+        list.innerHTML = j.sessions.map((s) => {
+          const isCurrent = s.tokenSuffix === currentSuffix;
+          const created = new Date(s.createdAt).toLocaleString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          const expires = new Date(s.expiresAt).toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' });
+          return `<div style="padding:12px 0;border-bottom:1px solid #f3f3f3;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div style="flex:1;">
+              <div style="font-weight:${isCurrent ? '600' : '400'};color:${isCurrent ? '#1e3a2e' : '#333'};font-size:13px;">
+                ${isCurrent ? '✓ 此设备 / This device · ' : ''}…${s.tokenSuffix}
+              </div>
+              <div style="color:#888;font-size:11px;margin-top:2px;">登录于 / Signed in: ${created} · 到期 / Expires: ${expires}</div>
+            </div>
+            ${isCurrent ? '' : `<button onclick="revokeSession('${s._id}')" style="background:none;border:1px solid #ddd;color:#666;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">✕ 登出</button>`}
+          </div>`;
+        }).join('');
+      } catch (e) {
+        list.innerHTML = '<div style="padding:18px;color:#b5381b;">网络错误 / Network: ' + (e.message || 'unknown') + '</div>';
+      }
+    }
+    function closeSessionsModal() {
+      document.getElementById('sessions-modal').style.display = 'none';
+    }
+    // revokeSession — sign out a specific OTHER device by its Convex _id. The
+    // server checks that the row's email matches the caller's session scope, so
+    // a guessed/forged _id from another admin's space gets rejected (403).
+    async function revokeSession(sessionId) {
+      try {
+        const r = await fetch('/api/auth/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey || '' },
+          body: JSON.stringify({ revoke: 'session', sessionId }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.ok) {
+          alert('登出失败 / Revoke failed: ' + (j.error || r.status));
+          return;
+        }
+        openSessionsModal(); // refresh the list
+      } catch (e) {
+        alert('网络错误 / Network: ' + (e.message || 'unknown'));
+      }
+    }
+    async function signOutCurrent() {
+      if (!confirm('登出当前设备？/ Sign out this device?')) return;
+      try {
+        await fetch('/api/auth/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey || '' },
+          body: JSON.stringify({ revoke: 'current' }),
+        });
+      } catch (_) { /* best effort */ }
+      localStorage.removeItem('pawpaw_inbox_key');
+      location.reload();
+    }
+    async function signOutAll() {
+      if (!confirm('登出所有设备？您将需要重新登录所有设备。\nSign out everywhere? You will need to sign in again on every device.')) return;
+      try {
+        const r = await fetch('/api/auth/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey || '' },
+          body: JSON.stringify({ revoke: 'all' }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.ok) {
+          alert('登出失败 / Sign-out failed: ' + (j.error || r.status));
+          return;
+        }
+      } catch (_) { /* best effort */ }
+      localStorage.removeItem('pawpaw_inbox_key');
+      location.reload();
+    }
+
+    // requestMagicLink — POST the entered email to /api/auth/request-link. Server
+    // checks the ADMIN_EMAIL_ALLOWLIST env and emails the requester a single-use
+    // sign-in URL via Resend if (and only if) the email is allowlisted. We always
+    // show the same "check your inbox" message regardless of allowlist outcome —
+    // privacy (no enumeration) + simpler UX.
+    async function requestMagicLink() {
+      const emailEl = document.getElementById('login-email-input');
+      const btn = document.getElementById('login-magic-btn');
+      const msg = document.getElementById('login-magic-msg');
+      const email = (emailEl?.value || '').trim();
+      if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        msg.style.color = '#b5381b';
+        msg.textContent = '请输入有效的邮箱地址 / Please enter a valid email.';
+        return;
+      }
+      btn.disabled = true;
+      const origLabel = btn.textContent;
+      btn.textContent = '发送中… / Sending…';
+      msg.style.color = '#1e3a2e';
+      msg.textContent = '';
+      try {
+        const r = await fetch('/api/auth/request-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        // Always show the same friendly message — the server intentionally
+        // returns 200 even for non-allowlisted addresses to avoid email-existence
+        // disclosure. Real failures come back as 5xx and we surface those.
+        if (r.ok) {
+          msg.style.color = '#1e3a2e';
+          msg.textContent = '✓ 如果邮箱在白名单内，登录链接已发送（请检查垃圾邮件）。15 分钟内有效。\n✓ If your email is allowlisted, a sign-in link has been sent (check spam). Valid 15 minutes.';
+        } else {
+          msg.style.color = '#b5381b';
+          msg.textContent = '发送失败，请稍后再试 / Sending failed, please try again.';
+        }
+      } catch (e) {
+        msg.style.color = '#b5381b';
+        msg.textContent = '网络错误 / Network error: ' + (e?.message || 'unknown');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = origLabel;
+      }
+    }
+    
+    let chatHistory = [];
+    let systemMessageShown = false; // Prevent duplicate system messages
+    
+    async function refreshData() {
+      // Ensure tab content structure exists (may have been destroyed by detail view)
+      ensureInquiryListStructure();
+      
+      const loading = document.getElementById('loading');
+      const list = document.getElementById('inquiries-list');
+      const empty = document.getElementById('empty-state');
+      
+      if (loading) loading.style.display = 'block';
+      if (list) list.style.display = 'none';
+      if (empty) empty.style.display = 'none';
+      
+      try {
+        const res = await fetch('/api/inbox', {
+          headers: { 'x-api-key': apiKey }
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        // Handle unauthorized: clear cached key and force re-login.
+        // Some older deploys returned HTTP 200 with {ok:false, error:'unauthorized'},
+        // so check both signals — defense in depth.
+        if (res.status === 401 || (data && data.error === 'unauthorized')) {
+          localStorage.removeItem('pawpaw_inbox_key');
+          apiKey = '';
+          const keyInput = document.getElementById('api-key-input');
+          if (keyInput) keyInput.value = '';
+          document.getElementById('login-overlay').style.display = 'flex';
+          document.getElementById('app').classList.remove('logged-in');
+          const loginErr = document.getElementById('login-error');
+          if (loginErr) loginErr.textContent = '密钥无效。请联系 Homen / Invalid key. Contact Homen.';
+          const loadingEl = document.getElementById('loading');
+          if (loadingEl) loadingEl.textContent = '';
+          return;
+        }
+
+        if (!data.ok) throw new Error(data.error);
+
+        inquiries = data.inquiries || [];
+
+        // Load bookings + external iCal blocks + pending review requests in parallel.
+        fetch('/api/bookings', { headers: { 'x-api-key': apiKey } })
+          .then((r) => r.ok ? r.json() : { bookings: [] })
+          .then((b) => { confirmedBookings = b.bookings || []; })
+          .catch(() => { confirmedBookings = []; });
+        fetch('/api/bookings?view=pending-reviews', { headers: { 'x-api-key': apiKey } })
+          .then((r) => r.ok ? r.json() : { pending: [] })
+          .then((p) => {
+            // Only surface phone-contact pendings in the UI — email-contact ones
+            // get auto-sent by the daily cron without mom lifting a finger.
+            pendingReviews = (p.pending || []).filter((b) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.customerContact || ''));
+          })
+          .catch(() => { pendingReviews = []; });
+        loadExternalBlocks();
+
+        renderInquiries();
+
+        // Stats banner — more honest than "all replied" when inbox has never received anything.
+        clearAgentErrorMessages(); // success → wipe prior "加载失败" noise
+        const stats = data.stats || {};
+        updateInboxBadge(stats.unreplied || 0);
+        maybeChimeForNewInquiries(stats.unreplied || 0);
+        if (!systemMessageShown) {
+          if (stats.total === 0) {
+            addAgentMessage('👋 欢迎！您的收件箱现在是空的——当客户在网站上留言时会出现在这里。');
+          } else if (stats.unreplied > 0) {
+            addAgentMessage(`📬 今天有 ${stats.unreplied} 个新咨询需要回复。`);
+          } else {
+            addAgentMessage(`✅ 本周共有 ${stats.total} 条咨询，都回复完了，真棒！`);
+          }
+          systemMessageShown = true;
+        }
+
+      } catch (err) {
+        // Surface the full error + stack so it's actionable from the UI alone —
+        // the user shouldn't need to open DevTools to report what went wrong.
+        const msg = err && err.message ? err.message : String(err);
+        const stackLine = err && err.stack ? err.stack.split('\n').slice(0, 3).join(' · ') : '';
+        const loadingEl = document.getElementById('loading');
+        if (loadingEl) {
+          loadingEl.innerHTML = `加载失败: ${msg}<br /><small style="color:#888;font-size:11px">${stackLine}</small><br /><button onclick="refreshData()" style="margin-top:8px;padding:6px 14px;border-radius:6px;border:1px solid #ccc;background:white;cursor:pointer">重试</button>`;
+        }
+        console.error('refreshData error:', err);
+        if (typeof addAgentMessage === 'function') {
+          addAgentMessage(`❌ 加载失败：${msg}. 请截图给 Homen 排查。`);
+        }
+      }
+    }
+    
+    function ensureInquiryListStructure() {
+      const container = document.getElementById('tab-content');
+      if (!container) return;
+      
+      // Check if loading element exists; if not, restore structure
+      if (!document.getElementById('loading')) {
+        container.innerHTML = `
+          <div class="loading" id="loading">加载中...</div>
+          <div id="inquiries-list" style="display:none"></div>
+          <div class="empty-state" id="empty-state" style="display:none"></div>
+        `;
+      }
+    }
+    
+    async function sendToAgent(message) {
+      showTyping();
+      
+      try {
+        const res = await fetch('/api/agent/泡泡', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-api-key': apiKey
+          },
+          body: JSON.stringify({ message, history: chatHistory })
+        });
+        
+        const data = await res.json();
+        hideTyping();
+        
+        if (data.ok) {
+          addAgentMessage(data.response);
+          chatHistory = data.history || [];
+          
+          // If agent fetched inbox data, refresh the display
+          if (data.tools?.some(t => t.tool === 'fetch_inbox')) {
+            setTimeout(refreshData, 500);
+          }
+        } else {
+          addAgentMessage('抱歉，我遇到了一些问题。请稍后再试。');
+        }
+        
+      } catch (err) {
+        hideTyping();
+        addAgentMessage('网络连接有问题，但我可以帮您查看本地数据。');
+        // Fallback to local data
+        refreshData();
+      }
+    }
+    
+    // ============== ONBOARDING TOUR ==============
+    // Four-step modal shown after first successful login. Lightweight, no tour
+    // library — just a centered card with prev/next/skip. Persists completion
+    // to localStorage so it never shows twice.
+    const TOUR_STEPS = [
+      {
+        emoji: '🐾',
+        title: '欢迎使用泡泡 Paw Paw',
+        sub: '您的客户咨询专属助手',
+        body: `
+          <p>这里帮您做 4 件事：</p>
+          <ul>
+            <li>接收客户从网站发来的咨询（自动翻译成中文）</li>
+            <li>一键回复邮件或短信</li>
+            <li>把咨询确认为正式预订，同步到您的手机日历</li>
+            <li>自动记账，年底生成税务报告</li>
+          </ul>
+          <p style="color:#666;font-size:12px;margin-top:12px">30 秒快速介绍，随时可以跳过。</p>
+        `,
+      },
+      {
+        emoji: '📥',
+        title: '收件箱 · 所有咨询在这里',
+        sub: '客户从您的网站发来的消息会实时出现',
+        body: `
+          <p>收到新咨询时：</p>
+          <ul>
+            <li><strong>左上红点</strong>：表示待回复</li>
+            <li>点开看原文 + 中文翻译</li>
+            <li>下面的蓝色模板（问候、价格、要定金…）帮您快速拼回复</li>
+            <li>如果客户留的是电话号码，按钮会变成 <strong>📱 发短信回复</strong> —— 会直接打开您手机的 Messages 预填好内容</li>
+          </ul>
+        `,
+      },
+      {
+        emoji: '📅',
+        title: '日历 · 所有预订一目了然',
+        sub: '本月档期 · 冲突提醒 · 收入汇总',
+        body: `
+          <p>在日历页面：</p>
+          <ul>
+            <li>绿点 = 已确认预订，紫点 = 客户还没确认</li>
+            <li><strong>橘色冲突标记</strong>：同一天有多个预订时会自动提醒</li>
+            <li>点 <strong>🚫 休息日</strong> 可以标记个人时间（度假、看医生）</li>
+            <li>点 <strong>📤 推送到手机</strong> 把整本日历订阅到 iPhone/Android —— 5 分钟自动更新</li>
+            <li>点 <strong>💰 本月收入</strong> 看到详细明细和税务报告</li>
+          </ul>
+        `,
+      },
+      {
+        emoji: '🔗',
+        title: '分享您的网站',
+        sub: '越多人知道，越多咨询',
+        body: `
+          <p>在收件箱空闲时候，按 <strong>🔗 分享我的网站</strong> 按钮，会生成一条可以直接发到微信/Nextdoor/Facebook 的文字 + 二维码。</p>
+          <p style="margin-top:10px">线下也可以：按 <strong>🖨️ 打印传单</strong> 生成一张 4×6 的传单（带大二维码），贴在宠物店、公告栏或社区中心。</p>
+          <p style="margin-top:12px">有问题随时打字问泡泡助手（左边聊天框），或按 <strong>刷新</strong> 重新加载。</p>
+          <p style="color:#888;font-size:12px;margin-top:14px">祝您生意兴隆！🐾</p>
+        `,
+      },
+    ];
+    let _tourStep = 0;
+
+    function showOnboardingTour() {
+      _tourStep = 0;
+      let backdrop = document.getElementById('tour-backdrop');
+      if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.id = 'tour-backdrop';
+        backdrop.className = 'tour-backdrop';
+        backdrop.addEventListener('click', (e) => { if (e.target === backdrop) dismissTour(false); });
+        document.body.appendChild(backdrop);
+      }
+      backdrop.classList.add('open');
+      renderTourStep();
+    }
+
+    function renderTourStep() {
+      const backdrop = document.getElementById('tour-backdrop');
+      if (!backdrop) return;
+      const step = TOUR_STEPS[_tourStep];
+      const isLast = _tourStep === TOUR_STEPS.length - 1;
+      const dots = TOUR_STEPS.map((_, i) => `<span class="tour-dot ${i === _tourStep ? 'active' : ''}"></span>`).join('');
+      backdrop.innerHTML = `
+        <div class="tour-card">
+          <button class="tour-close" onclick="dismissTour(false)" aria-label="关闭">×</button>
+          <span class="tour-emoji">${step.emoji}</span>
+          <h3 class="tour-title">${step.title}</h3>
+          <p class="tour-sub">${step.sub}</p>
+          <div class="tour-body">${step.body}</div>
+          <div class="tour-dots">${dots}</div>
+          <div class="tour-actions">
+            <button class="tour-skip" onclick="dismissTour(true)">${isLast ? '' : '跳过介绍'}</button>
+            <div style="display:flex;gap:8px">
+              ${_tourStep > 0 ? '<button class="tour-btn" onclick="prevTourStep()">上一步</button>' : ''}
+              <button class="tour-btn primary" onclick="${isLast ? 'dismissTour(true)' : 'nextTourStep()'}">${isLast ? '开始使用 🐾' : '下一步'}</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function nextTourStep() {
+      if (_tourStep < TOUR_STEPS.length - 1) { _tourStep++; renderTourStep(); }
+    }
+    function prevTourStep() {
+      if (_tourStep > 0) { _tourStep--; renderTourStep(); }
+    }
+    function dismissTour(markSeen) {
+      const backdrop = document.getElementById('tour-backdrop');
+      if (backdrop) backdrop.classList.remove('open');
+      if (markSeen) localStorage.setItem('pawpaw_onboarding_seen', '1');
+    }
+
+    // ============== SOUND ALERT FOR NEW INQUIRIES ==============
+    // Web Audio API synthesizes a short friendly chime (two-tone rising) when
+    // the unread count INCREASES between polls. Never fires on first load, never
+    // fires on revisit of an existing message. Toggle defaults to on; persisted
+    // to localStorage so mom's preference survives reloads.
+    const SOUND_KEY = 'pawpaw_sound_enabled';
+    let _prevUnreadCount = null; // null on first load → skip chime
+    let _audioCtx = null;
+
+    function soundEnabled() {
+      // Default enabled (anything !== '0' is on).
+      return localStorage.getItem(SOUND_KEY) !== '0';
+    }
+    function toggleSound() {
+      const now = soundEnabled();
+      localStorage.setItem(SOUND_KEY, now ? '0' : '1');
+      addAgentMessage(now ? '🔕 已关闭新咨询提示音。' : '🔔 已打开新咨询提示音。会在收到新咨询时响一声。');
+      renderSoundToggle();
+    }
+    function renderSoundToggle() {
+      const btn = document.getElementById('sound-toggle');
+      if (!btn) return;
+      btn.textContent = soundEnabled() ? '🔔' : '🔕';
+      btn.title = soundEnabled() ? '提示音：开（点击关闭）' : '提示音：关（点击开启）';
+    }
+
+    function playChime() {
+      if (!soundEnabled()) return;
+      try {
+        if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = _audioCtx;
+        // Resume if suspended (autoplay-policy — user gesture needed once).
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        // Two-tone rising chime: 660Hz → 988Hz, soft envelope.
+        [[660, 0], [988, 0.12]].forEach(([freq, delay]) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          const start = now + delay;
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(0.12, start + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.28);
+          osc.start(start);
+          osc.stop(start + 0.3);
+        });
+      } catch (_) { /* audio unavailable — silent */ }
+    }
+
+    // Called from refreshData whenever stats arrive. Only chimes on strict increase
+    // of unread vs previous observation within the same tab-session.
+    function maybeChimeForNewInquiries(unread) {
+      if (_prevUnreadCount !== null && unread > _prevUnreadCount) {
+        playChime();
+      }
+      _prevUnreadCount = unread;
+    }
+
+    // ============== TAB-TITLE + FAVICON UNREAD BADGE ==============
+    // Keeps the OS tab label honest so mom knows to check the app without
+    // opening it. Favicon gets a small red dot when unread > 0.
+    const _baseTitle = '泡泡 Paw Paw · 收件箱';
+    const _baseFavicon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🐾%3C/text%3E%3C/svg%3E";
+
+    function updateInboxBadge(unread) {
+      const n = Number(unread) || 0;
+      // Title
+      document.title = n > 0 ? `(${n}) ${_baseTitle}` : _baseTitle;
+      // Favicon — redraw on a canvas with a red pill if unread > 0
+      let link = document.querySelector('link[rel="icon"]');
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      if (n === 0) { link.href = _baseFavicon; return; }
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64; canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        // Paw emoji as background
+        ctx.font = '52px serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        ctx.fillText('🐾', 32, 36);
+        // Red badge bottom-right
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath();
+        ctx.arc(50, 50, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 18px -apple-system, sans-serif';
+        ctx.fillText(n > 9 ? '9+' : String(n), 50, 52);
+        link.href = canvas.toDataURL('image/png');
+      } catch (_) { /* canvas unsupported → silently leave base favicon */ }
+    }
+
+    // Rotating tip of the day — simple deterministic pick so it changes once per day
+    // but is stable within a session (non-technical users don't like jitter).
+    const DAILY_TIPS = [
+      { head: '💡 让新客户找到您', body: '一段时间没新咨询？在 Google 商家上发一张今天带狗狗散步的照片。新鲜度是 Google 排名的重要信号。' },
+      { head: '💡 老客户最容易转介绍', body: '回复过的客户中，选 1-2 位带着感谢发个微信，问问他们的狗狗最近好不好。不推销，只问候。' },
+      { head: '💡 评价是本月最值得的事', body: '请 3 位老客户在 Google 上写一句评价。5 条真实好评 = 流量翻倍的分水岭。' },
+      { head: '💡 一张好照片胜过十行文字', body: '拍一张正在睡觉的客户狗狗（已获许可），发到 Facebook Page 或 Nextdoor，人们会自动分享。' },
+      { head: '💡 下周有空档？', body: '在日历上把个人时间标上休息日——防止客户不小心预订到您要陪家人的那天。' },
+      { head: '💡 定期更新您的服务介绍', body: '您的 Google 商家上次更新是什么时候？隔一两个月加一张新照片，排名会上来。' },
+      { head: '💡 友好地提醒', body: '本周有预订到期？提前一天给客户发个提醒短信，让他们知道时间。专业感满满。' },
+    ];
+
+
+    // ============== SITE CMS — Squarespace-style editor (P1 minimal) ==============
+    const CMS_DEFAULTS = {
+      en: {
+        hero: {
+          eyebrow: "Castro Valley · Est. 2018 · 6+ years",
+          headline: "A calm home<br />for your dog.",
+          sub: "Small, home-style dog boarding in Castro Valley. Just 1–2 dogs at a time. Especially good with puppies, seniors, rescues, and anxious dogs.",
+        },
+        host: { bio: "I've been providing calm, safe home-style dog boarding since 2018 — over 6 years caring for dogs of all breeds, sizes, and personalities. I'm especially good with puppies, senior dogs, rescue dogs, and dogs with anxiety or sensitive health conditions. With animal-rescue experience and 2 years working at a professional dog daycare in San Francisco, I've handled shy and special-needs dogs with patience. I only take 1–2 dogs at a time so each one gets full attention in a quiet, clean home. Bilingual EN / 中文 / Español. Free meet-and-greet before every booking." },
+        pricing: [
+          { service: "Adult dog overnight", note: "any size", rate: "$55", suffix: "/night" },
+          { service: "Puppy overnight", note: "vaccinated, can join group", rate: "$60", suffix: "/night" },
+          { service: "Same-household 2nd dog", note: "add-on rate", rate: "+$30", suffix: "/night" },
+          { service: "Holiday rate", note: "major US holidays", rate: "$75–80", suffix: "/night" },
+          { service: "Daycare", note: "drop-off 9am–5pm", rate: "$40", suffix: "/day" },
+          { service: "Solo puppy daycare", note: "unvaccinated or untrained — only dog here", rate: "$70", suffix: "/day" },
+        ],
+      },
+      zh: {
+        hero: { eyebrow: "Castro Valley · 2018 年开始 · 6 年以上经验", headline: "安静的家，<br />给您的狗狗。", sub: "Castro Valley 家庭式狗狗寄养。一次只接 1–2 只。尤其擅长照顾幼犬、老年犬、救援犬和焦虑犬。" },
+        host: { bio: "我自 2018 年起提供安静、安全的家庭式狗狗寄养服务，6 年以上经验。尤其擅长照顾幼犬、老年犬、救援犬、焦虑犬。我有动物救助经验，也曾在旧金山专业狗狗寄养与日托中心工作两年。每次只接待 1–2 只狗狗。中英文 / Español 接待，每次寄养前免费见面。" },
+        pricing: [
+          { service: "成犬过夜寄养", note: "所有体型", rate: "$55", suffix: "/晚" },
+          { service: "幼犬过夜寄养", note: "已打齐疫苗，可与其他狗一起", rate: "$60", suffix: "/晚" },
+          { service: "同家庭第二只", note: "加价", rate: "+$30", suffix: "/晚" },
+          { service: "节日加价", note: "美国主要节日", rate: "$75–80", suffix: "/晚" },
+          { service: "日托", note: "早 9 点至晚 5 点", rate: "$40", suffix: "/天" },
+          { service: "单独幼犬日托", note: "未打齐疫苗或未训练 · 仅此一只", rate: "$70", suffix: "/天" },
+        ],
+      },
+      es: {
+        hero: { eyebrow: "Castro Valley · Desde 2018 · Más de 6 años", headline: "Un hogar tranquilo<br />para tu perro.", sub: "Cuidado familiar de perros en Castro Valley. Solo 1–2 perros a la vez. Especializada en cachorros, perros mayores, rescatados y ansiosos." },
+        host: { bio: "Cuido perros en Castro Valley desde 2018 — más de 6 años. Trabajé dos años en una guardería profesional en San Francisco y tengo experiencia en rescate. Solo recibo 1–2 perros a la vez." },
+        pricing: [
+          { service: "Adulto · noche", note: "cualquier tamaño", rate: "$55", suffix: "/noche" },
+          { service: "Cachorro · noche", note: "vacunado, puede unirse al grupo", rate: "$60", suffix: "/noche" },
+          { service: "Segundo perro misma casa", note: "adicional", rate: "+$30", suffix: "/noche" },
+          { service: "Tarifa días feriados", note: "feriados de EE.UU.", rate: "$75–80", suffix: "/noche" },
+          { service: "Guardería diurna", note: "9am–5pm", rate: "$40", suffix: "/día" },
+          { service: "Guardería solo cachorro", note: "sin vacunas o sin entrenar · único perro", rate: "$70", suffix: "/día" },
+        ],
+      },
+    };
+
+    async function loadCmsContent() {
+      const fetches = ['en', 'zh', 'es'].map((lang) =>
+        fetch(`/api/site-content?lang=${lang}`).then((r) => r.ok ? r.json() : { lang, data: null }).catch(() => ({ lang, data: null }))
+      );
+      const results = await Promise.all(fetches);
+      for (const r of results) {
+        cmsContent[r.lang] = r.data || JSON.parse(JSON.stringify(CMS_DEFAULTS[r.lang]));
+      }
+    }
+
+    async function renderCmsEditor() {
+      const container = document.getElementById('tab-content');
+      if (!container) return;
+      container.innerHTML = '<div class="loading" style="padding:40px;text-align:center;color:var(--text-secondary)">加载中…</div>';
+      await loadCmsContent();
+      paintCmsEditor();
+    }
+
+    function paintCmsEditor() {
+      const container = document.getElementById('tab-content');
+      if (!container) return;
+      const c = cmsContent[cmsActiveLang];
+      const langTabs = ['en', 'zh', 'es'].map((l) => {
+        const label = { en: 'English', zh: '中文', es: 'Español' }[l];
+        const active = l === cmsActiveLang ? 'active' : '';
+        return `<button class="cms-langtab ${active}" onclick="switchCmsLang('${l}')">${label}</button>`;
+      }).join('');
+      container.innerHTML = `
+        <div class="cms-wrap">
+          <div class="cms-bar">
+            <div class="cms-langtabs">${langTabs}</div>
+            <div class="cms-actions">
+              <span class="cms-status" id="cms-status">${cmsDirty ? '⚠️ 未保存' : '✅ 已保存'}</span>
+              <button class="btn btn-primary" onclick="saveCmsLang()" id="cms-save-btn">💾 保存</button>
+            </div>
+          </div>
+          <div class="cms-section">
+            <h3>🌟 首页 (Hero)</h3>
+            <label>顶部小标<input class="cms-input" data-cms-set="hero.eyebrow" value="${escapeHtml(c.hero?.eyebrow || '')}" /></label>
+            <label>大标题 (允许 &lt;br&gt;)<input class="cms-input" data-cms-set="hero.headline" value="${escapeHtml(c.hero?.headline || '')}" /></label>
+            <label>副标题<textarea class="cms-input" data-cms-set="hero.sub" rows="2">${escapeHtml(c.hero?.sub || '')}</textarea></label>
+          </div>
+          <div class="cms-section">
+            <h3>👋 关于 Yan</h3>
+            <label>个人简介<textarea class="cms-input" data-cms-set="host.bio" rows="6">${escapeHtml(c.host?.bio || '')}</textarea></label>
+          </div>
+          <div class="cms-section">
+            <h3>📸 今日照片 <span style="font-weight:400;color:var(--text-secondary);font-size:13px">· 显示在网站底部 + 拍立得风格留念</span></h3>
+            <p style="font-size:12px;color:var(--text-secondary);margin:0 0 12px">每天上传 1–2 张散步/玩耍照,网站访客自动看到。同一张照片再去 Google Business 发一遍,Google 会推您到搜索前面 (10 分钟/周, 完全免费)。</p>
+            <div id="cms-gallery-thumbs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:12px"></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <input id="cms-photo-file" type="file" accept="image/*" capture="environment" style="font-size:13px" />
+              <input id="cms-photo-caption" class="cms-input" placeholder="一句话说明 (可选,例如: Mochi 今天散步) — 留空也行" maxlength="200" />
+              <button id="cms-photo-upload-btn" class="cms-row-add" type="button" style="background:#fff8e1;border:1px solid #f9c46d;color:#7a5e2a;font-weight:600">📸 上传照片 / Upload</button>
+              <div id="cms-photo-status" style="font-size:12px;color:var(--text-secondary);min-height:18px"></div>
+            </div>
+          </div>
+          <div class="cms-section">
+            <h3>💰 价格 (${(c.pricing || []).length} 行)</h3>
+            <div id="cms-pricing-rows">
+            ${(c.pricing || []).map((row, i) => `
+              <div class="cms-pricing-row" data-pricing-row="${i}">
+                <input class="cms-input" placeholder="服务" data-cms-set="pricing.${i}.service" value="${escapeHtml(row.service || '')}" />
+                <input class="cms-input" placeholder="备注" data-cms-set="pricing.${i}.note" value="${escapeHtml(row.note || '')}" />
+                <input class="cms-input" placeholder="价格" data-cms-set="pricing.${i}.rate" value="${escapeHtml(row.rate || '')}" />
+                <input class="cms-input" placeholder="单位" data-cms-set="pricing.${i}.suffix" value="${escapeHtml(row.suffix || '')}" />
+                <button class="cms-row-remove" data-remove-row="${i}" title="删除此行" aria-label="删除此行">✕</button>
+              </div>
+            `).join('')}
+            </div>
+            <button class="cms-row-add" id="cms-add-pricing-row" type="button">+ 添加一行 / Add row</button>
+          </div>
+          <p style="font-size:12px;color:var(--text-secondary);margin-top:20px">✏️ 修改后按 <strong>💾 保存</strong>。1 分钟内出现在公开网站上。</p>
+        </div>`;
+      // Add-row button
+      const addBtn = container.querySelector('#cms-add-pricing-row');
+      if (addBtn) addBtn.addEventListener('click', () => {
+        if (!cmsContent[cmsActiveLang].pricing) cmsContent[cmsActiveLang].pricing = [];
+        cmsContent[cmsActiveLang].pricing.push({ service: '', note: '', rate: '', suffix: '' });
+        cmsDirty = true;
+        renderCmsEditor();
+      });
+      // Remove-row buttons
+      container.querySelectorAll('[data-remove-row]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const idx = Number(e.target.dataset.removeRow);
+          if (!confirm('删除这一行价格?')) return;
+          cmsContent[cmsActiveLang].pricing.splice(idx, 1);
+          cmsDirty = true;
+          renderCmsEditor();
+        });
+      });
+      // ============== 📸 PHOTO UPLOAD WIRING ==============
+      renderGalleryThumbs();
+      const photoBtn = container.querySelector('#cms-photo-upload-btn');
+      if (photoBtn) photoBtn.addEventListener('click', uploadPhoto);
+      container.querySelectorAll('[data-cms-set]').forEach((el) => {
+        el.addEventListener('input', (e) => {
+          const path = e.target.dataset.cmsSet.split('.');
+          let target = cmsContent[cmsActiveLang];
+          for (let i = 0; i < path.length - 1; i++) {
+            const key = isNaN(path[i]) ? path[i] : Number(path[i]);
+            if (target[key] == null) target[key] = isNaN(path[i+1]) ? {} : [];
+            target = target[key];
+          }
+          const lastKey = path[path.length - 1];
+          target[isNaN(lastKey) ? lastKey : Number(lastKey)] = e.target.value;
+          cmsDirty = true;
+          const st = document.getElementById('cms-status');
+          if (st) st.textContent = '⚠️ 未保存';
+        });
+      });
+    }
+
+    function switchCmsLang(lang) {
+      if (cmsDirty && !confirm('当前语言有未保存的修改。要切换吗？')) return;
+      cmsActiveLang = lang;
+      cmsDirty = false;
+      paintCmsEditor();
+    }
+
+    // ============== 📸 PHOTO HELPERS ==============
+    function renderGalleryThumbs() {
+      const wrap = document.getElementById('cms-gallery-thumbs');
+      if (!wrap) return;
+      const c = cmsContent[cmsActiveLang] || {};
+      const photos = Array.isArray(c.gallery) ? c.gallery : [];
+      if (!photos.length) {
+        wrap.innerHTML = '<div style="color:#aaa;font-size:12px;padding:8px;border:1px dashed #ddd;border-radius:6px;text-align:center;grid-column:1/-1">还没有照片 — 点下面的「上传照片」加第一张 🐾</div>';
+        return;
+      }
+      wrap.innerHTML = photos.map((p, i) => {
+        const url = (p && p.url) || '';
+        const cap = (p && p.caption) || '';
+        const sid = (p && p.storageId) || '';
+        return `<div class="cms-photo-thumb" data-storage-id="${escapeHtml(sid)}">
+          <img src="${escapeHtml(url)}" alt="${escapeHtml(cap)}" loading="lazy" />
+          <button class="cms-photo-remove" data-remove-photo="${escapeHtml(sid)}" title="删除" aria-label="删除照片">✕</button>
+        </div>`;
+      }).join('');
+      wrap.querySelectorAll('[data-remove-photo]').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          const sid = e.currentTarget.dataset.removePhoto;
+          if (!sid) return;
+          if (!confirm('删除这张照片?网站访客 1 分钟内看不到了。')) return;
+          try {
+            const r = await fetch('/api/site-content?action=gallery-remove', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+              body: JSON.stringify({ storageId: sid }),
+            });
+            const j = await r.json();
+            if (!j.ok) throw new Error(j.error || `HTTP ${r.status}`);
+            // Update local state — remove from gallery in all langs
+            for (const lang of ['en','zh','es']) {
+              if (cmsContent[lang] && Array.isArray(cmsContent[lang].gallery)) {
+                cmsContent[lang].gallery = cmsContent[lang].gallery.filter((p) => p.storageId !== sid);
+              }
+            }
+            renderGalleryThumbs();
+          } catch (err) {
+            alert('删除失败: ' + (err.message || err));
+          }
+        });
+      });
+    }
+
+    // Compress image client-side: max 1280px wide, JPEG quality 0.85.
+    // Returns Blob ready for upload.
+    function compressImage(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('read_failed'));
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onerror = () => reject(new Error('decode_failed'));
+          img.onload = () => {
+            const MAX = 1280;
+            let w = img.naturalWidth, h = img.naturalHeight;
+            if (w > MAX || h > MAX) {
+              if (w >= h) { h = Math.round(h * MAX / w); w = MAX; }
+              else { w = Math.round(w * MAX / h); h = MAX; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            canvas.toBlob((blob) => {
+              if (!blob) return reject(new Error('encode_failed'));
+              resolve(blob);
+            }, 'image/jpeg', 0.85);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function uploadPhoto() {
+      const fileInput = document.getElementById('cms-photo-file');
+      const captionInput = document.getElementById('cms-photo-caption');
+      const status = document.getElementById('cms-photo-status');
+      const btn = document.getElementById('cms-photo-upload-btn');
+      const file = fileInput && fileInput.files && fileInput.files[0];
+      if (!file) { if (status) status.textContent = '⚠️ 请先选一张照片'; return; }
+      if (!file.type.startsWith('image/')) { if (status) status.textContent = '⚠️ 不是图片文件'; return; }
+      const caption = (captionInput && captionInput.value || '').slice(0, 200);
+      if (btn) { btn.disabled = true; btn.textContent = '上传中…'; }
+      if (status) status.textContent = '🔄 压缩图片…';
+      try {
+        const blob = await compressImage(file);
+        if (status) status.textContent = `🔄 上传中… (${(blob.size/1024).toFixed(0)}KB)`;
+        // 1. Get short-lived upload URL from Convex (via Vercel proxy with admin auth)
+        const urlRes = await fetch('/api/site-content?action=gallery-upload-url', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+        });
+        const urlJson = await urlRes.json();
+        if (!urlJson.ok || !urlJson.uploadUrl) throw new Error(urlJson.error || 'upload_url_failed');
+        // 2. POST file directly to Convex storage
+        const upRes = await fetch(urlJson.uploadUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'image/jpeg' },
+          body: blob,
+        });
+        if (!upRes.ok) throw new Error(`upload_${upRes.status}`);
+        const upJson = await upRes.json();
+        const storageId = upJson.storageId;
+        if (!storageId) throw new Error('no_storageId');
+        // 3. Commit storageId into gallery (writes to all 3 langs)
+        const addRes = await fetch('/api/site-content?action=gallery-add', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+          body: JSON.stringify({ storageId, caption }),
+        });
+        const addJson = await addRes.json();
+        if (!addJson.ok) throw new Error(addJson.error || 'add_failed');
+        // 4. Update local state for all 3 langs
+        const newEntry = { url: addJson.url, storageId, caption, ts: Date.now() };
+        for (const lang of ['en','zh','es']) {
+          if (!cmsContent[lang]) cmsContent[lang] = {};
+          if (!Array.isArray(cmsContent[lang].gallery)) cmsContent[lang].gallery = [];
+          cmsContent[lang].gallery.unshift(newEntry);
+          if (cmsContent[lang].gallery.length > 24) cmsContent[lang].gallery.length = 24;
+        }
+        renderGalleryThumbs();
+        if (fileInput) fileInput.value = '';
+        if (captionInput) captionInput.value = '';
+        if (status) status.textContent = '✅ 上传成功 · 1 分钟内出现在网站上';
+        addAgentMessage('✅ 照片已上传 — 1 分钟内访客看到。同一张去 Google Business 再发一遍效果更好 🐾');
+      } catch (err) {
+        if (status) status.textContent = '❌ 上传失败: ' + (err.message || err);
+        addAgentMessage('❌ 照片上传失败: ' + (err.message || err));
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '📸 上传照片 / Upload'; }
+      }
+    }
+
+    async function saveCmsLang() {
+      const btn = document.getElementById('cms-save-btn');
+      const status = document.getElementById('cms-status');
+      if (btn) { btn.disabled = true; btn.textContent = '保存中…'; }
+      try {
+        const res = await fetch('/api/site-content', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+          body: JSON.stringify({ lang: cmsActiveLang, data: cmsContent[cmsActiveLang], updatedBy: 'admin' })
+        });
+        const body = await res.json();
+        if (!body.ok) throw new Error(body.error || `HTTP ${res.status}`);
+        cmsDirty = false;
+        if (status) status.textContent = '✅ 已保存 · 1 分钟内生效';
+        addAgentMessage('✅ 已保存 ' + cmsActiveLang.toUpperCase() + ' 内容。');
+      } catch (err) {
+        if (status) status.textContent = '❌ 保存失败';
+        addAgentMessage('❌ CMS 保存失败: ' + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '💾 保存'; }
+      }
+    }
+
+    function renderEmptyState(container) {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const active = confirmedBookings.filter((b) => b.status !== 'cancelled' && !isPersonalBlock(b));
+      const monthBookings = active.filter((b) => {
+        const mStart = Date.UTC(year, month, 1);
+        const mEnd = Date.UTC(year, month + 1, 0, 23, 59, 59, 999);
+        return b.startMs <= mEnd && b.endMs >= mStart;
+      });
+      const monthRev = monthBookings
+        .filter((b) => b.status === 'confirmed' && Number.isFinite(b.priceTotal))
+        .reduce((s, b) => s + b.priceTotal, 0);
+      const nowMs = Date.now();
+      const upcoming = active
+        .filter((b) => b.endMs >= nowMs && b.status === 'confirmed')
+        .sort((a, b) => a.startMs - b.startMs)[0];
+
+      const firstTime = active.length === 0;
+      const tip = DAILY_TIPS[Math.floor(nowMs / 86_400_000) % DAILY_TIPS.length];
+
+      // Build stats row only if there's real data to celebrate.
+      let statsHtml = '';
+      if (!firstTime) {
+        const daysBooked = new Set();
+        for (const b of monthBookings) {
+          for (let d = b.startMs; d <= b.endMs; d += 86_400_000) {
+            daysBooked.add(new Date(d).toISOString().slice(0, 10));
+          }
+        }
+        statsHtml = `
+          <div class="es-stats">
+            <div class="es-stat accent"><div class="n">$${monthRev.toLocaleString()}</div><div class="l">本月收入</div></div>
+            <div class="es-stat"><div class="n">${monthBookings.length}</div><div class="l">本月预订</div></div>
+            <div class="es-stat"><div class="n">${daysBooked.size}</div><div class="l">本月占用天数</div></div>
+          </div>
+        `;
+      }
+
+      // Next-booking card (forward-looking — gives mom something to prepare for).
+      let nextHtml = '';
+      if (upcoming) {
+        const startStr = new Date(upcoming.startMs).toISOString().slice(5, 10).replace('-', '/');
+        const endStr = new Date(upcoming.endMs).toISOString().slice(5, 10).replace('-', '/');
+        const daysAway = Math.max(0, Math.round((upcoming.startMs - nowMs) / 86_400_000));
+        const whenLabel = daysAway === 0 ? '就是今天' : daysAway === 1 ? '明天开始' : `${daysAway} 天后开始`;
+        const price = Number.isFinite(upcoming.priceTotal) ? ` · $${upcoming.priceTotal}` : '';
+        nextHtml = `
+          <div class="es-next">
+            <div class="k">📅 下一个预订</div>
+            <div class="v">${escapeHtml(upcoming.customerName)} · ${escapeHtml(upcoming.dogName || '（未填狗狗名）')} · ${startStr}–${endStr}${price}</div>
+            <div class="when">${whenLabel}</div>
+          </div>
+        `;
+      }
+
+      const heroHtml = firstTime
+        ? `
+          <div class="es-hero">
+            <div class="pawprint">🐾</div>
+            <h2>欢迎来到收件箱</h2>
+            <p>当客户在网站上提交咨询时，会出现在这里。</p>
+          </div>
+          <ul class="es-first-time">
+            <li>自动翻译成中文，方便您快速回复</li>
+            <li>一键回复邮件或短信（用您手机的 Messages）</li>
+            <li>把咨询确认为正式预订，自动同步到手机日历</li>
+            <li>按月查看收入和税务报告</li>
+          </ul>
+        `
+        : `
+          <div class="es-hero">
+            <div class="pawprint">🐾</div>
+            <h2>都处理完啦 ✨</h2>
+            <p>目前没有待回复的咨询——意味着您跟上了进度。</p>
+          </div>
+          ${statsHtml}
+          ${nextHtml}
+        `;
+
+      // Pending review-request block — only for phone-contact customers, since
+      // email ones are auto-handled by the daily cron. Each card has a one-tap
+      // SMS handoff button (opens native Messages with pre-filled review ask).
+      let reviewsHtml = '';
+      if (pendingReviews.length > 0) {
+        const rows = pendingReviews.slice(0, 5).map((b) => {
+          const firstName = (b.customerName || '').split(/\s+/)[0] || b.customerName;
+          const dogShort = (b.dogName || '').split(/[,，]/)[0];
+          const endStr = new Date(b.endMs).toISOString().slice(5, 10).replace('-', '/');
+          return `
+            <div class="rev-row">
+              <div class="rev-row-main">
+                <strong>${escapeHtml(firstName)}</strong> · ${escapeHtml(dogShort || '(狗狗)')} · ${endStr} 离店
+              </div>
+              <div class="rev-row-actions">
+                <button onclick="askForReview('${b._id}')" class="rev-ask" title="打开手机 Messages，预填好评价请求">📱 问评价</button>
+                <button onclick="skipReviewRequest('${b._id}')" class="rev-skip" title="不打扰这位客户">跳过</button>
+              </div>
+            </div>`;
+        }).join('');
+        reviewsHtml = `
+          <div class="es-reviews">
+            <div class="es-reviews-head">
+              <span class="k">📝 可以请评价的客户</span>
+              <span class="n">${pendingReviews.length}</span>
+            </div>
+            ${rows}
+            <p class="es-reviews-note">客户离店 1-3 天内是最佳评价时机。一句话也 OK，数量比质量重要。</p>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        ${heroHtml}
+        ${reviewsHtml}
+        <div class="es-actions">
+          <button class="es-action" onclick="switchTab('calendar')">📅 查看日历</button>
+          <button class="es-action" onclick="openPersonalBlockModal()">🚫 添加休息日</button>
+          <button class="es-action" onclick="window.open('/flyer.html','_blank')" title="打印 4×6 的宣传单，适合贴在宠物店、社区公告栏">🖨️ 打印传单</button>
+          <button class="es-action primary" onclick="shareSiteLink()">🔗 分享我的网站</button>
+        </div>
+        <div class="es-tip">
+          <span class="k">${tip.head}</span>
+          ${tip.body}
+        </div>
+      `;
+    }
+
+    // Open native Messages with a pre-filled bilingual review request.
+    async function askForReview(bookingId) {
+      const b = pendingReviews.find((x) => x._id === bookingId) || confirmedBookings.find((x) => x._id === bookingId);
+      if (!b) { alert('预订未找到'); return; }
+      const reviewUrl = 'https://<your-app>.vercel.app/?ref=review-ask';
+      const firstName = (b.customerName || '').split(/\s+/)[0] || '';
+      const dogShort = (b.dogName || '').split(/[,，]/)[0] || 'your dog';
+      const text = `Hi ${firstName}! Thanks so much for trusting me with ${dogShort}. If you had a good experience, a quick Google review would mean the world to a small business like mine: ${reviewUrl} — Yan 🐾`;
+      const e164 = phoneToE164(b.customerContact);
+      if (!e164) { alert('无法识别电话号码: ' + b.customerContact); return; }
+
+      // Mark as requested FIRST (before opening SMS) so we don't show this row again
+      // even if mom closes Messages without sending. She can still send — the ask is recorded.
+      try {
+        await fetch('/api/bookings?action=mark-review-requested', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+          body: JSON.stringify({ bookingId, channel: 'manual' }),
+        });
+      } catch (_) { /* non-fatal — proceed with SMS anyway */ }
+
+      // Open native Messages with pre-filled text (must be within user-gesture window).
+      window.location.href = `sms:${e164}?&body=${encodeURIComponent(text)}`;
+
+      // Remove from local list + refresh UI.
+      pendingReviews = pendingReviews.filter((x) => x._id !== bookingId);
+      addAgentMessage(`📱 已打开给 ${firstName} 的短信，在 Messages 中按发送就好。`);
+      const empty = document.getElementById('empty-state');
+      if (empty && empty.style.display !== 'none') renderEmptyState(empty);
+    }
+
+    async function skipReviewRequest(bookingId) {
+      try {
+        await fetch('/api/bookings?action=mark-review-requested', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+          body: JSON.stringify({ bookingId, channel: 'skipped' }),
+        });
+      } catch (_) { /* non-fatal */ }
+      pendingReviews = pendingReviews.filter((x) => x._id !== bookingId);
+      const empty = document.getElementById('empty-state');
+      if (empty && empty.style.display !== 'none') renderEmptyState(empty);
+    }
+
+    // ============== SHARE MODAL ==============
+    // Four pre-written pitches for the channels mom actually uses, each sized right
+    // for that platform's cultural norms. WeChat gets warm + personal; Nextdoor
+    // gets neighborly; Facebook gets scannable bullets; SMS gets compact.
+    // QR code is generated server-side by api.qrserver.com (free, no auth, public
+    // URL so no privacy tradeoff — the URL is what we want to share anyway).
+    const SITE_URL = 'https://<your-app>.vercel.app';
+    const SHARE_PITCHES = {
+      wechat: {
+        label: '微信 / 朋友圈',
+        lang: 'zh',
+        text: `🐾 Paw Paw Pet Care · Yan 的家庭狗狗寄养
+Castro Valley · 一次只接 1-2 只
+5 年经验 · Rescue + SF daycare 急救认证 · 中英文接待
+每天发照片 📸 免费见面 💕
+
+短信 415-823-0199 预约
+${SITE_URL}`,
+      },
+      nextdoor: {
+        label: 'Nextdoor',
+        lang: 'en',
+        text: `Hi neighbors 🐾 My mom Yan runs a small home dog boarding service right here in Castro Valley — just 1-2 dogs at a time, 6+ years experience, bilingual (English / 中文).
+
+Every booking starts with a free meet-and-greet so your pup feels safe before you leave them. Daily photo updates throughout the stay.
+
+Text 415-823-0199 or visit ${SITE_URL}`,
+      },
+      facebook: {
+        label: 'Facebook / WhatsApp',
+        lang: 'en',
+        text: `🐾 Paw Paw Pet Care — Small home dog boarding in Castro Valley, CA
+
+• Only 1-2 dogs at a time (no kennels, no chaos)
+• 6+ years experience · Rescue + SF daycare
+• Daily photo updates · Free meet-and-greet
+• Bilingual English / 中文
+• Serving Castro Valley, Hayward, San Leandro, San Lorenzo, Dublin
+
+Text 415-823-0199 · ${SITE_URL}`,
+      },
+      sms: {
+        label: '短信 (给朋友转发)',
+        lang: 'en',
+        text: `Paw Paw Pet Care — small home dog boarding in Castro Valley. 5yr exp, bilingual EN/中文. 1-2 dogs max. Text 415-823-0199 or ${SITE_URL}`,
+      },
+    };
+    let _sharePitchKey = 'wechat';
+
+    function shareSiteLink() {
+      _sharePitchKey = 'wechat';
+      let modal = document.getElementById('cal-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'cal-modal';
+        modal.className = 'cal-modal';
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeSubscribeModal(); });
+        document.body.appendChild(modal);
+      }
+      renderShareModal(modal);
+      modal.classList.add('open');
+    }
+
+    function renderShareModal(modal) {
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=${encodeURIComponent(SITE_URL)}`;
+      const supportsNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
+      const tabs = Object.entries(SHARE_PITCHES).map(([key, v]) =>
+        `<button class="share-tab ${key === _sharePitchKey ? 'active' : ''}" onclick="selectSharePitch('${key}')">${v.label}</button>`
+      ).join('');
+      const pitch = SHARE_PITCHES[_sharePitchKey];
+
+      modal.innerHTML = `
+        <div class="cal-modal-body" style="max-width:520px;max-height:88vh;overflow:auto">
+          <h3 style="margin:0 0 6px">🔗 分享您的网站</h3>
+          <p style="font-size:12px;color:var(--text-secondary);margin:0 0 14px">选择平台 → 复制文字 → 粘贴到对应 app</p>
+          <div style="text-align:center;margin:10px 0 6px">
+            <img src="${qrUrl}" width="180" height="180" alt="QR code" style="border-radius:10px;border:1px solid var(--border);padding:4px;background:white" />
+            <p style="font-size:11px;color:var(--text-secondary);margin:6px 0 0">📱 朋友用微信扫一扫直接看到主页</p>
+          </div>
+          <div class="share-tabs" style="display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 8px">${tabs}</div>
+          <textarea id="share-pitch-text" readonly style="width:100%;min-height:130px;padding:12px;border:1px solid var(--border);border-radius:8px;font:13px/1.55 -apple-system,sans-serif;background:var(--bg-secondary);resize:vertical" dir="${pitch.lang === 'zh' ? 'auto' : 'ltr'}">${escapeHtml(pitch.text)}</textarea>
+          <p style="font-size:11px;color:var(--text-secondary);margin:6px 0 10px">✏️ 可以编辑后再复制</p>
+          <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="closeSubscribeModal()">关闭</button>
+            <button class="primary" onclick="copySharePitch()">📋 复制文字</button>
+            ${supportsNativeShare ? `<button onclick="nativeSharePitch()">📤 系统分享</button>` : ''}
+            <button onclick="window.open('/flyer.html','_blank')" title="打印 4×6 宣传单">🖨️ 打印传单</button>
+          </div>
+          <p style="margin-top:12px;font-size:11px;color:var(--text-secondary)">
+            💡 每周选一个平台发一次 —— Google 商家的"最近更新"信号帮助排名。
+            线下也可以：按 <strong>🖨️ 打印传单</strong> 贴在宠物店 / 社区公告栏。
+          </p>
+        </div>`;
+    }
+
+    function selectSharePitch(key) {
+      if (!SHARE_PITCHES[key]) return;
+      _sharePitchKey = key;
+      const modal = document.getElementById('cal-modal');
+      if (modal) renderShareModal(modal);
+    }
+
+    async function copySharePitch() {
+      const text = document.getElementById('share-pitch-text')?.value || '';
+      if (!text) return;
+      try {
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(text);
+          addAgentMessage(`✅ 已复制 ${SHARE_PITCHES[_sharePitchKey].label} 版本的文字。粘贴到对应 app 发出去就行。`);
+        } else {
+          const ta = document.getElementById('share-pitch-text');
+          if (ta) { ta.select(); document.execCommand('copy'); }
+          addAgentMessage('✅ 已复制到剪贴板。');
+        }
+      } catch (e) {
+        addAgentMessage('复制失败，请手动选中文字复制: ' + e.message);
+      }
+    }
+
+    async function nativeSharePitch() {
+      const text = document.getElementById('share-pitch-text')?.value || '';
+      if (!text || !navigator.share) return;
+      try {
+        await navigator.share({ title: 'Paw Paw Pet Care', text, url: SITE_URL });
+      } catch (_) { /* user cancelled — silent */ }
+    }
+
+    function renderInquiries() {
+      const loading = document.getElementById('loading');
+      const empty = document.getElementById('empty-state');
+      const list = document.getElementById('inquiries-list');
+
+      if (loading) loading.style.display = 'none';
+
+      if (inquiries.length === 0) {
+        if (empty) {
+          empty.style.display = 'block';
+          renderEmptyState(empty);
+        }
+        return;
+      }
+      
+      if (list) list.style.display = 'block';
+      const container = document.getElementById('inquiries-list');
+      if (!container) return;
+      
+      container.innerHTML = inquiries.map(i => `
+        <div class="inquiry-card ${selectedInquiry?.id === i.id ? 'selected' : ''} ${i.replied ? '' : 'unread'}" 
+             onclick="selectInquiry('${i.id}')">
+          <div class="inquiry-header">
+            <div>
+              <span class="inquiry-name">${escapeHtml(i.name)} ${langFlag(i)}</span>
+              <span class="inquiry-time">${formatTime(i.timestamp)}</span>
+            </div>
+            <span class="inquiry-status ${i.replied ? 'status-replied' : 'status-new'}">
+              ${i.replied ? '已回复' : '待回复'}
+            </span>
+          </div>
+          <div class="inquiry-meta">
+            <span>📞 ${escapeHtml(i.contact)}</span>
+            ${i.dog ? `<span>🐕 ${escapeHtml(i.dog)}</span>` : ''}
+            ${i.dates ? `<span>📅 ${escapeHtml(i.dates)}</span>` : ''}
+            ${(() => { const src = resolveUtmSource(i); return src ? `<span class="utm-tag" title="来源渠道">${sourceEmoji(src)} ${escapeHtml(src)}</span>` : ''; })()}
+          </div>
+          <div class="inquiry-preview">${escapeHtml(i.message)}</div>
+        </div>
+      `).join('');
+    }
+    
+    function selectInquiry(id) {
+      selectedInquiry = inquiries.find(i => i.id === id);
+      if (!selectedInquiry) return;
+      
+      renderInquiries(); // Re-render to show selection
+      
+      // Show detail view
+      const container = document.getElementById('tab-content');
+      container.innerHTML = `
+        <div class="detail-view active">
+          <div class="detail-header">
+            <div class="detail-title">${escapeHtml(selectedInquiry.name)} 的咨询</div>
+            <div class="detail-meta">
+              <div class="meta-item">
+                <span class="meta-label">联系方式</span>
+                <span class="meta-value">${escapeHtml(selectedInquiry.contact)}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">服务类型</span>
+                <span class="meta-value">${selectedInquiry.service || '一般咨询'}</span>
+              </div>
+              ${selectedInquiry.dog ? `
+              <div class="meta-item">
+                <span class="meta-label">狗狗信息</span>
+                <span class="meta-value">${escapeHtml(selectedInquiry.dog)}</span>
+              </div>` : ''}
+              ${selectedInquiry.dates ? `
+              <div class="meta-item">
+                <span class="meta-label">日期</span>
+                <span class="meta-value">${escapeHtml(selectedInquiry.dates)}</span>
+              </div>` : ''}
+            </div>
+          </div>
+          
+          <div class="detail-content">
+            <div class="message-thread">
+              <div class="thread-message thread-inbound">
+                <div>${escapeHtml(selectedInquiry.message)}</div>
+                ${(() => {
+                  const dl = (selectedInquiry.detectedLang || selectedInquiry.lang || '').toLowerCase();
+                  if (dl && dl !== 'zh' && dl !== 'en' && selectedInquiry.translatedMessage) {
+                    return `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(0,0,0,.12);font-size:13px;color:#1e3a2e"><div style="font-size:11px;color:#6b7280;margin-bottom:4px">🌐 中文翻译（来源：${escapeHtml(langName(dl))}）</div>${escapeHtml(selectedInquiry.translatedMessage)}</div>`;
+                  }
+                  return '';
+                })()}
+                <div class="thread-time">${formatTime(selectedInquiry.timestamp)}</div>
+              </div>
+              ${selectedInquiry.replied ? (() => {
+                // Split the stored reply into (sent, original-zh) halves. The
+                // sendReply path stashes both with a delimiter because Convex
+                // optional fields silently drop through the Vercel SDK.
+                const REPLY_DELIM = '\n\n【ZH-ORIGINAL】\n';
+                const raw = selectedInquiry.replyMessage || '';
+                const sepIdx = raw.indexOf(REPLY_DELIM);
+                // Also accept legacy replyMessageOriginal field for older rows.
+                let sentPart = raw;
+                let origPart = selectedInquiry.replyMessageOriginal || '';
+                if (sepIdx >= 0) {
+                  sentPart = raw.slice(0, sepIdx);
+                  origPart = raw.slice(sepIdx + REPLY_DELIM.length);
+                }
+                const origBlock = origPart && origPart !== sentPart
+                  ? `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.3);font-size:12px;opacity:.85"><div style="font-size:10px;opacity:.7;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em">您的原文 (ZH)</div>${escapeHtml(origPart)}</div>`
+                  : '';
+                return `
+              <div class="thread-message thread-outbound">
+                <div>${escapeHtml(sentPart)}</div>
+                ${origBlock}
+                <div class="thread-time">${formatTime(selectedInquiry.repliedAt)}</div>`;
+              })() : '' || ''}${selectedInquiry.replied ? `
+              </div>
+              ` : ''}
+            </div>
+            
+            ${!selectedInquiry.replied ? (() => {
+              const contact = selectedInquiry.contact || '';
+              const viaSms = looksLikePhone(contact);
+              const viaEmail = /@/.test(contact);
+              const channelHint = viaSms ? `📱 通过短信发送到 <strong>${escapeHtml(contact)}</strong>` : viaEmail ? `📧 通过邮件发送到 <strong>${escapeHtml(contact)}</strong>` : `⚠️ 无法识别联系方式：${escapeHtml(contact)}`;
+              const sendLabel = viaSms ? '📱 发短信回复' : viaEmail ? '📧 发邮件回复' : '发送回复';
+              // Reply-translation toggle — only visible when customer's language isn't Chinese.
+              // Default ON so mom's ZH typing gets auto-translated without her remembering.
+              const dLang = (selectedInquiry.detectedLang || selectedInquiry.lang || '').toLowerCase();
+              const needsTranslation = dLang && dLang !== 'zh' && dLang !== 'en'; // if form hint is plain 'en' and no detection, assume mom's reply language is fine
+              const xlateBlock = needsTranslation
+                ? `<label class="xlate-toggle" title="您用中文打，发出去时自动翻译成 ${escapeHtml(langName(dLang))}">
+                     <input type="checkbox" id="cf-translate" checked />
+                     <span>✨ 自动翻译成 <strong>${escapeHtml(langName(dLang))}</strong> 再发送</span>
+                   </label>`
+                : '';
+              return `
+            <div class="reply-box">
+              <div class="templates">
+                <button class="template-chip" onclick="insertTemplate('greeting')">问候</button>
+                <button class="template-chip" onclick="insertTemplate('prices')">价格</button>
+                <button class="template-chip" onclick="insertTemplate('meet')">见面</button>
+                <button class="template-chip" onclick="insertTemplate('availability')">问日期</button>
+                <button class="template-chip" onclick="insertTemplate('vaccines')">疫苗</button>
+                <button class="template-chip" onclick="insertTemplate('deposit')">要定金</button>
+                <button class="template-chip" onclick="insertTemplate('booked')">确认预订</button>
+                <button class="template-chip" onclick="insertTemplate('soldout')" style="background:#fef3c7;color:#92400e">已满</button>
+                <button class="template-chip" onclick="insertTemplate('pickup')">确认接狗</button>
+                <button class="template-chip" onclick="insertTemplate('photo')">每日照片</button>
+                <button class="template-chip" onclick="insertTemplate('meetconfirm')">见面确认</button>
+              </div>
+              <p style="font-size:11px;color:var(--text-secondary);margin:6px 0 4px">${channelHint}${viaSms ? ' — 点发送会打开你手机短信 app 预填好内容' : ''}</p>
+              ${xlateBlock}
+              <textarea class="reply-textarea" id="reply-text" placeholder="输入您的回复..."></textarea>
+              <div class="reply-actions">
+                <button class="btn btn-secondary" onclick="renderInquiries(); document.getElementById('tab-content').innerHTML=''; refreshData();">取消</button>
+                <button class="btn btn-primary" onclick="sendReply()">${sendLabel}</button>
+              </div>
+            </div>`;
+            })() : '<div style="margin-top:24px;padding:16px;background:var(--accent-light);border-radius:12px;text-align:center;color:var(--accent);">✅ 已回复此咨询</div>'}
+          </div>
+        </div>
+      `;
+      
+      // Tell agent about selection
+      addAgentMessage(`已选中 ${selectedInquiry.name} 的咨询。${selectedInquiry.replied ? '已回复。' : '等待回复。'}需要我帮您草拟回复吗？`);
+    }
+    
+    async function sendReply() {
+      const textZh = document.getElementById('reply-text').value.trim();
+      if (!textZh || !selectedInquiry) return;
+
+      const contact = selectedInquiry.contact || '';
+      const viaSms = looksLikePhone(contact);
+      const viaEmail = /@/.test(contact);
+      const dLang = (selectedInquiry.detectedLang || selectedInquiry.lang || '').toLowerCase();
+      const translateToggle = document.getElementById('cf-translate');
+      const wantTranslate = translateToggle ? translateToggle.checked : false;
+      const needsTranslation = dLang && dLang !== 'zh' && wantTranslate;
+
+      // Branch: SMS handoff requires the user gesture to navigate to sms:URL
+      // synchronously — but if we need to translate first, that's an async call.
+      // Solution for SMS: run translate BEFORE the click resolves, then open sms: URL.
+      // Actually that breaks the gesture. Fallback: for SMS+translate, show the
+      // translated text in a confirmation step where the user clicks to proceed.
+      let outboundText = textZh;
+      if (needsTranslation) {
+        addAgentMessage(`🌐 正在翻译成 ${langName(dLang)}…`);
+        try {
+          const tr = await fetch('/api/inbox?action=translate', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+            body: JSON.stringify({ text: textZh, targetLang: dLang, sourceLang: 'zh' }),
+          });
+          const tb = await tr.json();
+          if (!tb.ok || !tb.text) throw new Error(tb.error || 'translate_failed');
+          outboundText = tb.text;
+        } catch (err) {
+          addAgentMessage(`❌ 翻译失败: ${err.message}。取消发送——请关闭翻译开关再试。`);
+          return;
+        }
+      }
+
+      // SMS: open native Messages with the outbound text. After translate path we
+      // lose the original user-gesture, but modern iOS/Android still honors sms:
+      // schema navigation if it happens "soon" after a user click — Safari allows
+      // up to ~5s. We're usually within that window.
+      if (viaSms) {
+        const e164 = phoneToE164(contact);
+        if (!e164) {
+          addAgentMessage('❌ 无法识别手机号格式：' + contact);
+          return;
+        }
+        const smsUrl = `sms:${e164}?&body=${encodeURIComponent(outboundText)}`;
+        window.location.href = smsUrl;
+      }
+
+      try {
+        const res = await fetch('/api/inbox?action=reply', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+          body: JSON.stringify({
+            inquiryId: selectedInquiry.id,
+            // Server-side also knows how to translate (as a fallback/double-check),
+            // but we already have the final outbound text — send that as `message`
+            // with translateReply:false to avoid re-translating.
+            message: outboundText,
+            translateReply: false,
+            channel: viaSms ? 'sms_handoff' : viaEmail ? 'email' : 'unknown',
+          })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+
+        const langSuffix = needsTranslation ? `（已翻译成 ${langName(dLang)}）` : '';
+        const msg = viaSms
+          ? `📱 短信草稿已打开${langSuffix}。在 Messages 中按发送就好。咨询已标记为已回复。`
+          : viaEmail
+            ? `✅ 邮件已发送${langSuffix}，咨询已标记为已回复。`
+            : `✅ 已标记为已回复${langSuffix}。`;
+        addAgentMessage(msg);
+        refreshData();
+      } catch (err) {
+        addAgentMessage('❌ 记录回复失败: ' + err.message + ' · ' + (viaSms ? '短信草稿应该已经打开了，你可以直接发出去。' : ''));
+      }
+    }
+    
+    // Quick-action handler. Used by the left-panel chip buttons (🔴 查看新咨询 etc).
+    // Each action does REAL work (tab switch, filter, render) + a dynamic agent
+    // message — not just a canned string.
+    async function askAgent(action) {
+      addUserMessage(getActionText(action));
+      showTyping();
+
+      try {
+        if (action === 'showNewInquiries') {
+          // 1. Clear any open detail view so the list can render cleanly.
+          selectedInquiry = null;
+          // 2. Switch tab visual state to "咨询列表" (it's the first .tab).
+          document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+          const firstTab = document.querySelector('.tab');
+          if (firstTab) firstTab.classList.add('active');
+          // 3. Rebuild the list structure in tab-content, then refresh data.
+          if (typeof ensureInquiryListStructure === 'function') ensureInquiryListStructure();
+          await refreshData();
+          // 4. Honest, count-aware agent message.
+          hideTyping();
+          const total = inquiries.length;
+          const unreplied = inquiries.filter((i) => !i.replied).length;
+          let msg;
+          if (total === 0) {
+            msg = '👋 目前收件箱是空的 —— 客户在网站上留言后会出现在这里。';
+          } else if (unreplied === 0) {
+            msg = `✨ 全部 ${total} 条咨询都已回复，真棒！`;
+          } else {
+            msg = `📬 共 ${total} 条咨询，<strong>${unreplied}</strong> 条等您回复。列表已刷新，红色的是未回复。`;
+          }
+          addAgentMessage(msg);
+          return;
+        }
+
+        if (action === 'showStats') {
+          selectedInquiry = null;
+          document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+          const statsTab = document.querySelectorAll('.tab')[2]; // 统计 is 3rd tab
+          if (statsTab) statsTab.classList.add('active');
+          // Reuse the existing switchTab stats rendering by calling it with the DOM.
+          await refreshData(); // ensure inquiries loaded
+          const unreplied = inquiries.filter((i) => !i.replied).length;
+          const replied = inquiries.length - unreplied;
+          // Month revenue from confirmedBookings (already loaded in session).
+          const now = new Date();
+          const y = now.getUTCFullYear(), m = now.getUTCMonth();
+          const monthStart = Date.UTC(y, m, 1);
+          const monthEnd = Date.UTC(y, m + 1, 0, 23, 59, 59, 999);
+          const monthRev = (confirmedBookings || [])
+            .filter((b) => b.status === 'confirmed' && b.startMs <= monthEnd && b.endMs >= monthStart && !isPersonalBlock(b))
+            .reduce((s, b) => s + (Number.isFinite(b.priceTotal) ? b.priceTotal : 0), 0);
+          document.getElementById('tab-content').innerHTML = `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;padding:16px 0">
+              <div style="background:white;padding:24px;border-radius:16px;border:1px solid var(--border)">
+                <div style="font-size:32px;font-weight:600">${inquiries.length}</div>
+                <div style="color:var(--text-secondary);font-size:14px">总咨询数</div>
+              </div>
+              <div style="background:white;padding:24px;border-radius:16px;border:1px solid var(--border)">
+                <div style="font-size:32px;font-weight:600;color:#dc3545">${unreplied}</div>
+                <div style="color:var(--text-secondary);font-size:14px">待回复</div>
+              </div>
+              <div style="background:white;padding:24px;border-radius:16px;border:1px solid var(--border)">
+                <div style="font-size:32px;font-weight:600;color:#28a745">${replied}</div>
+                <div style="color:var(--text-secondary);font-size:14px">已回复</div>
+              </div>
+              <div style="background:white;padding:24px;border-radius:16px;border:1px solid var(--border)">
+                <div style="font-size:32px;font-weight:600;color:#16a34a">$${monthRev.toLocaleString()}</div>
+                <div style="color:var(--text-secondary);font-size:14px">本月收入</div>
+              </div>
+            </div>`;
+          hideTyping();
+          addAgentMessage(`📊 当前 <strong>${unreplied}</strong> 待回复 · <strong>${replied}</strong> 已回复 · 本月已确认收入 <strong>$${monthRev.toLocaleString()}</strong>。`);
+          return;
+        }
+
+        if (action === 'helpReply') {
+          hideTyping();
+          if (selectedInquiry && !selectedInquiry.replied) {
+            // Prefill a greeting template if textarea is empty.
+            const ta = document.getElementById('reply-text');
+            if (ta && !ta.value.trim()) {
+              await insertTemplate('greeting');
+            }
+            addAgentMessage('👇 下面的回复框已帮您打好问候语，您可以挑模板或直接修改。');
+          } else if (selectedInquiry && selectedInquiry.replied) {
+            addAgentMessage('这条咨询已经回复过了。点左边其他咨询卡片来回复新的。');
+          } else {
+            addAgentMessage('点左边任意咨询卡片，我会在右侧打开回复框，帮您草拟回复。');
+          }
+          return;
+        }
+
+        // Fallback
+        hideTyping();
+        const response = agentResponses[action] || agentResponses.default;
+        addAgentMessage(response.replace('{count}', inquiries.length).replace('{unreplied}', inquiries.filter((i) => !i.replied).length));
+      } catch (err) {
+        hideTyping();
+        addAgentMessage('❌ 操作失败: ' + err.message);
+      }
+    }
+    
+    function sendChat() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      addUserMessage(text);
+      input.value = '';
+      input.style.height = 'auto';
+      
+      // Send to AI agent
+      sendToAgent(text);
+    }
+    
+    function getAgentResponse(text) {
+      const lower = text.toLowerCase();
+      if (lower.includes('价格') || lower.includes('多少钱')) return agentResponses.prices;
+      if (lower.includes('疫苗') || lower.includes('针')) return agentResponses.vaccines;
+      if (lower.includes('日期') || lower.includes('时间') || lower.includes('哪天')) return agentResponses.availability;
+      if (lower.includes('新') || lower.includes('咨询')) return agentResponses.showNewInquiries;
+      if (lower.includes('你好') || lower.includes('hi')) return agentResponses.greeting;
+      return agentResponses.default;
+    }
+    
+    function getActionText(action) {
+      const texts = {
+        showNewInquiries: '查看新咨询',
+        showStats: '查看统计',
+        helpReply: '帮我回复'
+      };
+      return texts[action] || action;
+    }
+    
+    // Simple markdown to HTML converter
+    function markdownToHtml(text) {
+      if (!text) return '';
+      return text
+        // Bold: **text** or __text__
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/__(.+?)__/g, '<strong>$1</strong>')
+        // Italic: *text* or _text_
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/_(.+?)_/g, '<em>$1</em>')
+        // Headers: ### text
+        .replace(/### (.+)/g, '<h3>$1</h3>')
+        .replace(/## (.+)/g, '<h2>$1</h2>')
+        .replace(/# (.+)/g, '<h1>$1</h1>')
+        // Lists: - item or * item
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/^\* (.+)$/gm, '<li>$1</li>')
+        // Line breaks
+        .replace(/\n/g, '<br>');
+    }
+    
+    // Cap the chat history so stale errors (esp. auth retries) don't pile up
+    // into an intimidating wall of red. Also dedupe consecutive identical
+    // messages — a non-technical user doesn't need to see "加载失败" four times.
+    const CHAT_MAX_AI_MESSAGES = 20;
+    let _lastAgentText = '';
+    function addAgentMessage(text) {
+      const container = document.getElementById('chat-messages');
+      if (!container) return;
+      if (text === _lastAgentText) return; // dedupe consecutive identical
+      _lastAgentText = text;
+      const div = document.createElement('div');
+      div.className = 'message message-ai';
+      div.innerHTML = markdownToHtml(text);
+      container.appendChild(div);
+      // LRU cap: remove oldest AI messages (keep the initial welcome message
+      // pinned by NOT counting the very first one).
+      const aiMsgs = container.querySelectorAll('.message-ai');
+      if (aiMsgs.length > CHAT_MAX_AI_MESSAGES) {
+        for (let i = 1; i < aiMsgs.length - CHAT_MAX_AI_MESSAGES + 1; i++) {
+          aiMsgs[i].remove();
+        }
+      }
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // When a load succeeds, wipe any stale "加载失败" messages from the chat —
+    // keeps the panel tidy for users who only open the app occasionally.
+    function clearAgentErrorMessages() {
+      const container = document.getElementById('chat-messages');
+      if (!container) return;
+      const msgs = container.querySelectorAll('.message-ai');
+      for (const m of msgs) {
+        if (/加载失败/.test(m.textContent)) m.remove();
+      }
+    }
+    
+    function addUserMessage(text) {
+      const container = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = 'message message-user';
+      div.textContent = text;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+    
+    function showTyping() {
+      const container = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = 'message message-ai typing';
+      div.id = 'typing-indicator';
+      div.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+    
+    function hideTyping() {
+      const typing = document.getElementById('typing-indicator');
+      if (typing) typing.remove();
+    }
+    
+    // In-memory cache for translated templates. Key: `${filled}:${targetLang}`.
+    // Prevents re-translating the same "确认预订" for the same customer when mom
+    // taps the chip twice.
+    const _templateTranslationCache = new Map();
+
+    async function insertTemplate(key) {
+      const raw = templates[key] || '';
+      const filled = fillTemplateVars(raw);
+      const ta = document.getElementById('reply-text');
+      if (!ta) return;
+      const dLang = (selectedInquiry?.detectedLang || selectedInquiry?.lang || '').toLowerCase();
+
+      // Fast path: customer is Chinese (or no language detected/plain-en form) → insert ZH as-is.
+      if (!dLang || dLang === 'zh' || dLang === 'en') {
+        ta.value = filled;
+        return;
+      }
+
+      // Slow path: non-Chinese customer — translate the filled template once, cache it.
+      const cacheKey = `${filled}::${dLang}`;
+      if (_templateTranslationCache.has(cacheKey)) {
+        ta.value = _templateTranslationCache.get(cacheKey);
+        return;
+      }
+      const originalValue = ta.value;
+      ta.value = `⏳ 正在翻译成 ${langName(dLang)}…`;
+      ta.disabled = true;
+      try {
+        const res = await fetch('/api/inbox?action=translate', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+          body: JSON.stringify({ text: filled, targetLang: dLang, sourceLang: 'zh' }),
+        });
+        const body = await res.json();
+        if (!body.ok || !body.text) throw new Error(body.error || 'translate_failed');
+        _templateTranslationCache.set(cacheKey, body.text);
+        ta.value = body.text;
+      } catch (err) {
+        // Fall back to ZH with an agent hint — mom can still send it, or turn off
+        // the translate toggle and let the server side handle it at send time.
+        ta.value = originalValue + filled;
+        addAgentMessage(`⚠️ 模板翻译失败: ${err.message}。已填入中文原文，您发送时会自动翻译。`);
+      } finally {
+        ta.disabled = false;
+        ta.focus();
+      }
+    }
+
+    // Phone detection: North American 10/11-digit forms. We're permissive about
+    // separators (dash, space, dot, parens) since inquiries come from free-text forms.
+    function looksLikePhone(s) {
+      if (!s) return false;
+      const digits = String(s).replace(/\D/g, '');
+      return digits.length === 10 || (digits.length === 11 && digits.startsWith('1'));
+    }
+
+    function phoneToE164(s) {
+      const digits = String(s).replace(/\D/g, '');
+      if (digits.length === 10) return '+1' + digits;
+      if (digits.length === 11 && digits.startsWith('1')) return '+' + digits;
+      return null;
+    }
+    
+    function setMode(mode) {
+      currentMode = mode;
+      const btns = document.querySelectorAll('.mode-btn');
+      btns.forEach((btn) => btn.classList.remove('active'));
+      // Look up the button by mode name, not event.target — keeps this callable
+      // programmatically without a synthetic event.
+      const idx = { assist: 0, autopilot: 1 }[mode];
+      if (idx != null && btns[idx]) btns[idx].classList.add('active');
+      
+      if (mode === 'autopilot') {
+        addAgentMessage('🤖 已切换到自动模式。我会自动回复客户常见问题，只将需要人工处理的咨询转给您。');
+      } else {
+        addAgentMessage('👋 已切换到协助模式。我会帮您查看和回复所有咨询。');
+      }
+    }
+    
+    function switchTab(tab) {
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach((t) => t.classList.remove('active'));
+      // Tab-by-name lookup instead of event.target — the empty-state 查看日历 button
+      // calls switchTab('calendar') programmatically; event.target would be undefined
+      // and throw in strict mode.
+      const idx = { inquiries: 0, calendar: 1, stats: 2, cms: 3 }[tab];
+      if (idx != null && tabs[idx]) tabs[idx].classList.add('active');
+      
+      if (tab === 'inquiries') {
+        ensureInquiryListStructure();
+        refreshData();
+      } else if (tab === 'calendar') {
+        renderCalendar();
+      } else if (tab === 'stats') {
+        const unreplied = inquiries.filter(i => !i.replied).length;
+        document.getElementById('tab-content').innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:16px 0">
+            <div style="background:white;padding:24px;border-radius:16px;border:1px solid var(--border)">
+              <div style="font-size:32px;font-weight:600">${inquiries.length}</div>
+              <div style="color:var(--text-secondary);font-size:14px">总咨询数</div>
+            </div>
+            <div style="background:white;padding:24px;border-radius:16px;border:1px solid var(--border)">
+              <div style="font-size:32px;font-weight:600;color:#dc3545">${unreplied}</div>
+              <div style="color:var(--text-secondary);font-size:14px">待回复</div>
+            </div>
+            <div style="background:white;padding:24px;border-radius:16px;border:1px solid var(--border)">
+              <div style="font-size:32px;font-weight:600;color:#28a745">${inquiries.length - unreplied}</div>
+              <div style="color:var(--text-secondary);font-size:14px">已回复</div>
+            </div>
+          </div>
+        `;
+      } else if (tab === 'cms') {
+        renderCmsEditor();
+      }
+    }
+    
+    // ============== CALENDAR ==============
+    let calendarCursor = null; // Date pointing at the 1st of the viewed month
+
+    function renderCalendar() {
+      if (!calendarCursor) {
+        const now = new Date();
+        calendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+
+      const year = calendarCursor.getFullYear();
+      const month = calendarCursor.getMonth();
+      const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+      const dayNames = ['日','一','二','三','四','五','六'];
+
+      // Group inquiries by local-date key (YYYY-MM-DD) using their timestamp
+      const byDay = {};
+      for (const inq of inquiries) {
+        const d = new Date(inq.timestamp || 0);
+        if (d.getFullYear() !== year || d.getMonth() !== month) continue;
+        const key = d.toISOString().slice(0, 10);
+        (byDay[key] = byDay[key] || []).push(inq);
+      }
+
+      // Authoritative bookings from the bookings table — SPLIT into customer vs personal.
+      // All date math uses UTC (startMs/endMs stored as UTC midnight).
+      const customerByDay = {};   // real paying customers
+      const personalByDay = {};   // mom's own days off (service=off)
+      const confirmedByDay = {};  // union, kept for backward-compat where used
+      for (const b of confirmedBookings) {
+        if (b.status === 'cancelled') continue;
+        const s = new Date(b.startMs), e = new Date(b.endMs);
+        if (isNaN(s) || isNaN(e)) continue;
+        const personal = isPersonalBlock(b);
+        for (let d = new Date(s); d <= e; d.setUTCDate(d.getUTCDate() + 1)) {
+          if (d.getUTCFullYear() !== year || d.getUTCMonth() !== month) continue;
+          const key = d.toISOString().slice(0, 10);
+          (confirmedByDay[key] = confirmedByDay[key] || []).push(b);
+          if (personal) (personalByDay[key] = personalByDay[key] || []).push(b);
+          else (customerByDay[key] = customerByDay[key] || []).push(b);
+        }
+      }
+      // External iCal blocks (mom's subscribed Google Calendar, if any).
+      const externalByDay = {};
+      for (const ev of externalBlocks) {
+        const s = new Date(ev.startMs), e = new Date(ev.endMs);
+        if (isNaN(s) || isNaN(e)) continue;
+        for (let d = new Date(s); d <= e; d.setUTCDate(d.getUTCDate() + 1)) {
+          if (d.getUTCFullYear() !== year || d.getUTCMonth() !== month) continue;
+          const key = d.toISOString().slice(0, 10);
+          (externalByDay[key] = externalByDay[key] || []).push(ev);
+        }
+      }
+      const promotedInquiryIds = new Set(confirmedBookings.filter((b) => !isPersonalBlock(b)).map((b) => String(b.inquiryId || '')));
+
+      // Inquiry-inferred speculative bookings (skip those already promoted).
+      const bookingByDay = {};
+      for (const inq of inquiries) {
+        if (promotedInquiryIds.has(String(inq._id || inq.id || ''))) continue;
+        const hits = parseDatesInMonth(inq.dates || '', year, month);
+        for (const key of hits) {
+          (bookingByDay[key] = bookingByDay[key] || []).push(inq);
+        }
+      }
+
+      // Conflict rule: a day conflicts if there's ANY customer activity (booking or
+      // speculative inquiry) AND anything else on the same day (another customer,
+      // personal block, or external busy). Personal+external alone = just busy, not conflict.
+      const conflictDays = new Set();
+      const allDays = new Set([
+        ...Object.keys(bookingByDay),
+        ...Object.keys(customerByDay),
+        ...Object.keys(personalByDay),
+        ...Object.keys(externalByDay),
+      ]);
+      for (const key of allDays) {
+        const customers = (customerByDay[key]?.length || 0) + (bookingByDay[key]?.length || 0);
+        const blocks = (personalByDay[key]?.length || 0) + (externalByDay[key]?.length || 0);
+        if (customers >= 2) conflictDays.add(key);
+        else if (customers >= 1 && blocks >= 1) conflictDays.add(key);
+      }
+
+      const firstDayOfWeek = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = new Date();
+      const todayKey = today.toISOString().slice(0, 10);
+
+      // Build grid cells
+      const cells = [];
+      for (let i = 0; i < firstDayOfWeek; i++) cells.push({ empty: true });
+      for (let day = 1; day <= daysInMonth; day++) {
+        const key = new Date(year, month, day).toISOString().slice(0, 10);
+        cells.push({
+          day,
+          key,
+          isToday: key === todayKey,
+          isConflict: conflictDays.has(key),
+          inquiries: byDay[key] || [],
+          bookings: bookingByDay[key] || [],
+          confirmed: confirmedByDay[key] || [],
+          customer: customerByDay[key] || [],
+          personal: personalByDay[key] || [],
+          external: externalByDay[key] || [],
+        });
+      }
+      while (cells.length % 7 !== 0) cells.push({ empty: true });
+
+      // Month-level stats
+      const monthInquiries = Object.values(byDay).flat();
+      const monthBookings = Object.values(bookingByDay).flat();
+      // Dedupe bookings (a booking spans multiple days) by id. Split customer vs personal.
+      const monthCustomerBookings = Array.from(new Map(Object.values(customerByDay).flat().map((b) => [b._id || b.id, b])).values());
+      const monthPersonalBookings = Array.from(new Map(Object.values(personalByDay).flat().map((b) => [b._id || b.id, b])).values());
+      const monthConfirmed = monthCustomerBookings.length;
+      const monthPersonal = monthPersonalBookings.length;
+      const monthExternalDays = Object.keys(externalByDay).length;
+      const monthUnreplied = monthInquiries.filter((i) => !i.replied).length;
+      // Revenue = sum of priceTotal across confirmed CUSTOMER bookings. Personal blocks excluded.
+      const revenueBookings = monthCustomerBookings.filter((b) => b.status === 'confirmed');
+      const monthRevenue = revenueBookings.reduce((s, b) => s + (Number.isFinite(b.priceTotal) ? b.priceTotal : 0), 0);
+      const missingPriceCount = revenueBookings.filter((b) => !Number.isFinite(b.priceTotal)).length;
+
+      const css = `
+        <style>
+          .cal-wrap { padding: 16px 0; }
+          .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+          .cal-title { font-size:18px; font-weight:600; }
+          .cal-nav { display:flex; gap:8px; }
+          .cal-nav button { background:white; border:1px solid var(--border); border-radius:8px; padding:6px 12px; cursor:pointer; font-size:14px; }
+          .cal-nav button:hover { background:var(--bg-secondary); }
+          .cal-stats { display:flex; gap:12px; margin-bottom:12px; font-size:13px; color:var(--text-secondary); }
+          .cal-stats .chip { background:white; border:1px solid var(--border); border-radius:999px; padding:4px 10px; }
+          .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; background:var(--border); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+          .cal-dow { background:var(--bg-secondary); padding:8px 0; text-align:center; font-size:12px; color:var(--text-secondary); font-weight:500; }
+          .cal-cell { background:white; min-height:84px; padding:6px 8px; position:relative; cursor:pointer; display:flex; flex-direction:column; }
+          .cal-cell.empty { background:var(--bg-secondary); cursor:default; }
+          .cal-cell:hover:not(.empty) { background:var(--bg-secondary); }
+          .cal-cell.today .cal-day { background:#111; color:white; }
+          .cal-day { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:12px; }
+          .cal-dots { margin-top:auto; display:flex; flex-wrap:wrap; gap:3px; }
+          .cal-dot { width:7px; height:7px; border-radius:50%; }
+          .cal-dot.new { background:#dc3545; }
+          .cal-dot.replied { background:#28a745; }
+          .cal-dot.booking { background:#6366f1; }
+          .cal-count { position:absolute; top:4px; right:6px; font-size:10px; color:var(--text-secondary); }
+          .cal-day-panel { margin-top:16px; background:white; border:1px solid var(--border); border-radius:12px; padding:16px; display:none; }
+          .cal-day-panel.open { display:block; }
+          .cal-day-panel h4 { margin:0 0 8px; font-size:14px; }
+          .cal-day-item { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; }
+          .cal-day-item:last-child { border:0; }
+          .cal-day-item .name { font-weight:500; }
+          .cal-day-item .tag { font-size:11px; padding:2px 6px; border-radius:4px; }
+          .cal-day-item .tag.new { background:#fee; color:#c00; }
+          .cal-day-item .tag.replied { background:#efe; color:#080; }
+          .cal-day-item .tag.booking { background:#eef; color:#44c; }
+          .cal-day-item.conflict { background:#fff8e6; border-left:3px solid #d97706; padding-left:6px; }
+          .cal-day-item .tag.conflict { background:#fef3c7; color:#92400e; }
+          .cal-cell.conflict { background:#fffbeb; outline:2px solid #f59e0b; outline-offset:-2px; }
+          .cal-cell.conflict:hover:not(.empty) { background:#fef3c7; }
+          .cal-dot.conflict { background:#f59e0b; }
+          .cal-dot.confirmed { background:#16a34a; box-shadow:0 0 0 1.5px #16a34a inset, 0 0 0 3px white; width:9px; height:9px; }
+          .cal-dot.personal { background:#6b7280; }
+          .cal-dot.external { background:#9ca3af; border:1.5px dashed #374151; width:9px; height:9px; background:transparent; }
+          .cal-cell.off-day { background:#f9fafb; }
+          .cal-cell.off-day .cal-day { color:#6b7280; }
+          .cal-stats .chip.conflict { background:#fef3c7; border-color:#f59e0b; color:#92400e; }
+          .cal-subscribe { display:inline-flex; align-items:center; gap:6px; background:#111; color:white; border:0; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:13px; }
+          .cal-subscribe:hover { background:#333; }
+          .cal-modal { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:1000; }
+          .cal-modal.open { display:flex; }
+          .cal-modal-body { background:white; border-radius:14px; padding:20px; max-width:460px; width:90%; }
+          .cal-modal-body h3 { margin:0 0 8px; font-size:16px; }
+          .cal-modal-body p { margin:4px 0; font-size:13px; color:var(--text-secondary); }
+          .cal-modal-body .url-box { background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-family:ui-monospace,monospace; font-size:11px; word-break:break-all; margin:10px 0; }
+          .cal-modal-body .row { display:flex; gap:8px; margin-top:10px; }
+          .cal-modal-body button { flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:white; cursor:pointer; font-size:13px; }
+          .cal-modal-body button.primary { background:#111; color:white; border-color:#111; }
+          .promote-btn { margin-left:8px; background:#16a34a; color:white; border:0; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer; }
+          .promote-btn:hover { background:#15803d; }
+          .promote-form { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0; }
+          .promote-form .field { display:flex; flex-direction:column; gap:4px; }
+          .promote-form .field.full { grid-column:1/-1; }
+          .promote-form label { font-size:11px; color:var(--text-secondary); font-weight:500; }
+          .promote-form input, .promote-form select, .promote-form textarea { padding:7px 10px; border:1px solid var(--border); border-radius:6px; font:inherit; font-size:13px; background:white; }
+          .promote-form textarea { resize:vertical; min-height:60px; font-family:inherit; }
+          .promote-preview { background:var(--bg-secondary); border-radius:6px; padding:8px 10px; font-size:12px; color:var(--text-secondary); margin-bottom:10px; }
+          .cal-stats .chip.revenue { background:#f0fdf4; border-color:#86efac; color:#166534; cursor:pointer; transition:background .15s; }
+          .cal-stats .chip.revenue:hover { background:#dcfce7; }
+          .cal-stats .chip.revenue strong { color:#16a34a; }
+          .rev-table { width:100%; border-collapse:collapse; font-size:12px; margin:8px 0; }
+          .rev-table th, .rev-table td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--border); }
+          .rev-table th { background:var(--bg-secondary); font-weight:600; font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.03em; }
+          .rev-table td.price { font-weight:600; color:#16a34a; text-align:right; }
+          .rev-summary { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:8px; margin-bottom:12px; }
+          .rev-summary .card { background:var(--bg-secondary); border-radius:8px; padding:10px; }
+          .rev-summary .card .label { font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.03em; }
+          .rev-summary .card .value { font-size:18px; font-weight:600; color:#111; margin-top:2px; }
+          .rev-empty { color:var(--text-secondary); font-size:13px; padding:20px; text-align:center; }
+        
+    /* CMS editor */
+    .cms-wrap { padding: 16px 4px 80px; max-width: 720px; margin: 0 auto; }
+    .cms-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; flex-wrap: wrap; }
+    .cms-langtabs { display: flex; gap: 4px; }
+    .cms-langtab { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border); background: white; font-size: 13px; cursor: pointer; color: var(--text-primary); }
+    .cms-langtab.active { background: #111; color: white; border-color: #111; }
+    .cms-actions { display: flex; align-items: center; gap: 12px; }
+    .cms-status { font-size: 12px; color: var(--text-secondary); }
+    .cms-section { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; }
+    .cms-section h3 { margin: 0 0 14px; font-size: 15px; font-weight: 600; }
+    .cms-section label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+    .cms-input { width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 11px; border: 1px solid var(--border); border-radius: 7px; font: inherit; font-size: 13px; background: var(--bg-secondary); color: var(--text-primary); }
+    .cms-input:focus { outline: none; border-color: #2563eb; background: white; }
+    textarea.cms-input { resize: vertical; min-height: 60px; font-family: inherit; line-height: 1.5; }
+    .cms-pricing-row { display: grid; grid-template-columns: 2fr 1.5fr 1fr 0.8fr 28px; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .cms-row-remove { background: transparent; border: 1px solid var(--border); border-radius: 6px; width: 28px; height: 32px; cursor: pointer; color: #b5381b; font-size: 13px; padding: 0; line-height: 1; }
+    .cms-row-remove:hover { background: #fef2f2; border-color: #fca5a5; }
+    .cms-row-add { margin-top: 8px; padding: 8px 14px; background: #f0f5f2; border: 1px dashed #82c7a7; border-radius: 7px; color: #1b6e3e; font-size: 13px; cursor: pointer; font-weight: 500; }
+    .cms-row-add:hover { background: #e0eee5; }
+    .cms-photo-thumb { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); background: #f5f5f5; }
+    .cms-photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cms-photo-remove { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border: 0; border-radius: 50%; background: rgba(0,0,0,0.55); color: white; font-size: 12px; line-height: 1; cursor: pointer; padding: 0; opacity: 0.85; }
+    .cms-photo-remove:hover { opacity: 1; background: #b5381b; }
+</style>
+      `;
+
+      const dowRow = dayNames.map((n) => `<div class="cal-dow">${n}</div>`).join('');
+      const cellsHtml = cells.map((c) => {
+        if (c.empty) return '<div class="cal-cell empty"></div>';
+        const newCount = c.inquiries.filter((i) => !i.replied).length;
+        const repliedCount = c.inquiries.filter((i) => i.replied).length;
+        const bookingCount = c.bookings.length;
+        const totalDots = newCount + repliedCount + bookingCount;
+        let dots = '';
+        const customerCount = c.customer.length;
+        const personalCount = c.personal.length;
+        const externalCount = c.external.length;
+        if (c.isConflict) dots += '<span class="cal-dot conflict" title="多重预订冲突"></span>';
+        for (let i = 0; i < Math.min(customerCount, 3); i++) dots += '<span class="cal-dot confirmed" title="已确认预订"></span>';
+        if (personalCount > 0) dots += '<span class="cal-dot personal" title="个人休息日"></span>';
+        if (externalCount > 0) dots += '<span class="cal-dot external" title="个人日历事件"></span>';
+        for (let i = 0; i < Math.min(newCount, 3); i++) dots += '<span class="cal-dot new"></span>';
+        for (let i = 0; i < Math.min(repliedCount, 3); i++) dots += '<span class="cal-dot replied"></span>';
+        for (let i = 0; i < Math.min(bookingCount, 3); i++) dots += '<span class="cal-dot booking"></span>';
+        const badge = totalDots > 6 ? `<div class="cal-count">+${totalDots - 6}</div>` : (totalDots > 0 ? `<div class="cal-count">${totalDots}</div>` : '');
+        const isOffDay = (personalCount > 0 || externalCount > 0) && customerCount === 0 && newCount === 0 && repliedCount === 0 && bookingCount === 0;
+        const classes = [c.isToday ? 'today' : '', c.isConflict ? 'conflict' : '', isOffDay ? 'off-day' : ''].filter(Boolean).join(' ');
+        return `
+          <div class="cal-cell ${classes}" onclick="showCalendarDay('${c.key}')" ${c.isConflict ? 'title="⚠️ 这一天有多个预订，请检查是否冲突"' : ''}>
+            <span class="cal-day">${c.day}</span>
+            ${badge}
+            <div class="cal-dots">${dots}</div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('tab-content').innerHTML = `
+        ${css}
+        <div class="cal-wrap">
+          <div class="cal-header">
+            <div class="cal-title">${year}年 ${monthNames[month]}</div>
+            <div class="cal-nav">
+              <button onclick="calendarPrev()">‹ 上月</button>
+              <button onclick="calendarToday()">今天</button>
+              <button onclick="calendarNext()">下月 ›</button>
+              <button class="cal-subscribe" onclick="openPersonalBlockModal()" title="标记一天为个人休息（不可预订）" style="background:#6b7280">🚫 休息日</button>
+              <button class="cal-subscribe" onclick="openIcalSubscriptionModal()" title="订阅自己的 Google 日历作为不可用时段" style="background:#2563eb">📅 个人日历</button>
+              <button class="cal-subscribe" onclick="showSubscribeModal()" title="订阅到 iPhone / Google 日历">📤 推送到手机</button>
+            </div>
+          </div>
+          <div class="cal-stats">
+            <span class="chip">本月咨询 <strong>${monthInquiries.length}</strong></span>
+            <span class="chip">待回复 <strong style="color:#dc3545">${monthUnreplied}</strong></span>
+            <span class="chip">已确认预订 <strong style="color:#16a34a">${monthConfirmed}</strong></span>
+            <span class="chip">未确认的询问 <strong style="color:#6366f1">${monthBookings.length}</strong></span>
+            ${monthPersonal ? `<span class="chip" style="background:#f3f4f6">🚫 休息日 <strong>${monthPersonal}</strong></span>` : ''}
+            ${monthExternalDays ? `<span class="chip" style="background:#f9fafb">📅 个人日历 <strong>${monthExternalDays}</strong> 天</span>` : ''}
+            ${conflictDays.size ? `<span class="chip conflict">⚠️ 冲突日 <strong>${conflictDays.size}</strong></span>` : ''}
+            <span class="chip revenue" onclick="showRevenueModal(${year}, ${month})" title="点击查看明细 · 导出 CSV">💰 本月收入 <strong>$${monthRevenue.toLocaleString()}</strong>${missingPriceCount ? ` <span style="color:#92400e;font-size:11px">· ${missingPriceCount} 未填价</span>` : ''}</span>
+          </div>
+          <div class="cal-grid">
+            ${dowRow}
+            ${cellsHtml}
+          </div>
+          <div id="cal-day-panel" class="cal-day-panel"></div>
+          <div style="margin-top:12px;font-size:12px;color:var(--text-secondary)">
+            <span class="cal-dot new" style="display:inline-block;margin:0 4px"></span>待回复
+            <span class="cal-dot replied" style="display:inline-block;margin:0 4px 0 10px"></span>已回复
+            <span class="cal-dot confirmed" style="display:inline-block;margin:0 4px 0 10px"></span>已确认预订
+            <span class="cal-dot booking" style="display:inline-block;margin:0 4px 0 10px"></span>未确认询问
+            <span class="cal-dot personal" style="display:inline-block;margin:0 4px 0 10px"></span>休息日
+            <span class="cal-dot external" style="display:inline-block;margin:0 4px 0 10px"></span>个人日历
+          </div>
+        </div>
+      `;
+    }
+
+    function calendarPrev() {
+      calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() - 1, 1);
+      renderCalendar();
+    }
+    function calendarNext() {
+      calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 1);
+      renderCalendar();
+    }
+    function calendarToday() {
+      const now = new Date();
+      calendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+      renderCalendar();
+    }
+
+    // Build the iCal feed URL using the current admin key. Private — anyone with
+    // this URL can read the feed. Mom keeps it in iOS Calendar → subscribe.
+    function buildCalendarUrls() {
+      const origin = location.origin; // https://<your-app>.vercel.app
+      const key = encodeURIComponent((apiKey || '').trim());
+      if (!key) return null;
+      const httpsUrl = `${origin}/api/calendar-ics?key=${key}`;
+      const webcalUrl = httpsUrl.replace(/^https?:/, 'webcal:');
+      return { httpsUrl, webcalUrl };
+    }
+
+    function showSubscribeModal() {
+      let modal = document.getElementById('cal-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'cal-modal';
+        modal.className = 'cal-modal';
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeSubscribeModal(); });
+        document.body.appendChild(modal);
+      }
+      const urls = buildCalendarUrls();
+      if (!urls) {
+        modal.innerHTML = `
+          <div class="cal-modal-body">
+            <h3>请先登录</h3>
+            <p>订阅链接需要 API Key。请先登录后再打开这个选项。</p>
+            <div class="row"><button class="primary" onclick="closeSubscribeModal()">好的</button></div>
+          </div>`;
+      } else {
+        modal.innerHTML = `
+          <div class="cal-modal-body">
+            <h3>📅 订阅到手机日历</h3>
+            <p><strong>iPhone / iPad:</strong> 点 "在日历中打开"，系统会弹窗询问是否订阅。</p>
+            <p><strong>Google 日历:</strong> 复制链接 → 打开 calendar.google.com → 左侧 "其他日历" + → "通过网址添加" → 粘贴。</p>
+            <p><strong>每 5 分钟自动更新。</strong>新咨询入库后自动出现在你的日历上。</p>
+            <div class="url-box">${urls.httpsUrl.replace(/</g, '&lt;')}</div>
+            <div class="row">
+              <button onclick="closeSubscribeModal()">关闭</button>
+              <button onclick="copyCalendarUrl('${urls.httpsUrl}')">复制链接</button>
+              <button class="primary" onclick="location.href='${urls.webcalUrl}'">在日历中打开</button>
+            </div>
+          </div>`;
+      }
+      modal.classList.add('open');
+    }
+
+    function closeSubscribeModal() {
+      const modal = document.getElementById('cal-modal');
+      if (modal) modal.classList.remove('open');
+    }
+
+    function copyCalendarUrl(url) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+          addAgentMessage('已复制日历订阅链接到剪贴板。');
+          closeSubscribeModal();
+        }).catch(() => alert('复制失败，请手动选中链接。'));
+      } else {
+        alert('请手动复制上方链接。');
+      }
+    }
+
+    // ============== PROMOTE INQUIRY → BOOKING ==============
+    // Takes an inquiry whose `dates` field parses to a range and lets mom confirm
+    // the exact start/end + service + notes, then inserts a row into the Convex
+    // `bookings` table via /api/bookings. Once promoted, the inquiry is hidden
+    // from the "未确认询问" (speculative) layer and shows up as "已确认预订".
+    function firstParsedRange(inq) {
+      const text = inq.dates || '';
+      const now = new Date();
+      const refYear = now.getFullYear();
+      // Try numeric M/D first, then English, then Chinese.
+      const num = text.match(/(\d{1,2})\/(\d{1,2})(?:\s*[-–]\s*(?:(\d{1,2})\/)?(\d{1,2}))?/);
+      if (num) {
+        const m1 = +num[1] - 1, d1 = +num[2];
+        const m2 = num[3] ? +num[3] - 1 : m1;
+        const d2 = num[4] ? +num[4] : d1;
+        return { start: new Date(refYear, m1, d1), end: new Date(refYear, m2, d2) };
+      }
+      const monthMap = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,sept:8,oct:9,nov:10,dec:11 };
+      const en = text.toLowerCase().match(/(jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[a-z]*\s+(\d{1,2})(?:\s*[-–]\s*(\d{1,2}))?/);
+      if (en) {
+        const mi = monthMap[en[1]];
+        if (mi != null) return { start: new Date(refYear, mi, +en[2]), end: new Date(refYear, mi, en[3] ? +en[3] : +en[2]) };
+      }
+      const zh = text.match(/(\d{1,2})月(\d{1,2})(?:\s*[-–~至到]\s*(\d{1,2}))?日?/);
+      if (zh) {
+        const mi = +zh[1] - 1;
+        return { start: new Date(refYear, mi, +zh[2]), end: new Date(refYear, mi, zh[3] ? +zh[3] : +zh[2]) };
+      }
+      // Default: today → today
+      return { start: new Date(refYear, now.getMonth(), now.getDate()), end: new Date(refYear, now.getMonth(), now.getDate()) };
+    }
+
+    // Backward-compat entry: promote an inquiry. Delegates to the unified modal.
+    function openPromoteModal(inquiryId) {
+      const inq = inquiries.find((i) => String(i._id || i.id) === String(inquiryId));
+      if (!inq) { alert('询问未找到'); return; }
+      openBookingModal({ mode: 'promote', inquiry: inq });
+    }
+
+    // Unified modal: create-from-inquiry | edit-existing.
+    // opts.mode = 'promote' | 'edit' | 'manual'
+    // opts.inquiry = inquiry doc (promote mode)
+    // opts.bookingId = booking id (edit mode)
+    function openBookingModal(opts) {
+      const fmtInput = (d) => new Date(d).toISOString().slice(0, 10);
+      const isEdit = opts.mode === 'edit';
+      const existing = isEdit ? confirmedBookings.find((b) => String(b._id || b.id) === String(opts.bookingId)) : null;
+      if (isEdit && !existing) { alert('预订未找到'); return; }
+
+      // Seed defaults from either the inquiry or the existing booking.
+      let start, end, service = '', status = 'confirmed', notes = '', priceTotal = '', depositPaid = false, preview = '';
+      let customerName = '', customerContact = '';
+      if (existing) {
+        start = new Date(existing.startMs);
+        end = new Date(existing.endMs);
+        service = existing.service || '';
+        status = existing.status || 'confirmed';
+        notes = existing.notes || '';
+        priceTotal = existing.priceTotal != null ? String(existing.priceTotal) : '';
+        depositPaid = !!existing.depositPaid;
+        customerName = existing.customerName || '';
+        customerContact = existing.customerContact || '';
+        preview = `<strong>${escapeHtml(customerName)}</strong> · ${escapeHtml(existing.dogName || '(无狗狗名)')}<br />
+          <span style="color:var(--text-secondary)">联系：${escapeHtml(customerContact)}</span><br />
+          <span style="color:var(--text-secondary)">创建来源：${existing.createdFrom === 'inquiry' ? '从询问确认' : '手动创建'}</span>`;
+      } else if (opts.inquiry) {
+        const range = firstParsedRange(opts.inquiry);
+        start = range.start; end = range.end;
+        service = opts.inquiry.service || '';
+        customerName = opts.inquiry.name;
+        customerContact = opts.inquiry.contact;
+        preview = `<strong>${escapeHtml(opts.inquiry.name)}</strong> · ${escapeHtml(opts.inquiry.dog || '(无狗狗名)')}<br />
+          <span style="color:var(--text-secondary)">联系：${escapeHtml(opts.inquiry.contact)}</span><br />
+          <span style="color:var(--text-secondary)">原文日期："${escapeHtml(opts.inquiry.dates || '')}"</span>`;
+      }
+
+      let modal = document.getElementById('cal-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'cal-modal';
+        modal.className = 'cal-modal';
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeSubscribeModal(); });
+        document.body.appendChild(modal);
+      }
+      const serviceOpts = [
+        ['', '（未填）'], ['boarding','过夜寄养'], ['daycare','日托'], ['walk','遛狗'], ['dropin','上门探望']
+      ].map(([v, l]) => `<option value="${v}" ${v === service ? 'selected' : ''}>${l}</option>`).join('');
+      const statusOpts = [
+        ['confirmed','已确认'], ['tentative','暂定']
+      ].map(([v, l]) => `<option value="${v}" ${v === status ? 'selected' : ''}>${l}</option>`).join('');
+
+      const onsubmitAttr = isEdit
+        ? `submitBookingForm(event, 'edit', '${opts.bookingId}')`
+        : `submitBookingForm(event, 'promote', '${(opts.inquiry && (opts.inquiry._id || opts.inquiry.id)) || ''}')`;
+      const submitLabel = isEdit ? '保存修改' : '创建预订';
+      const title = isEdit ? '✏️ 编辑预订' : '✅ 确认为正式预订';
+
+      modal.innerHTML = `
+        <div class="cal-modal-body" style="max-width:520px">
+          <h3>${title}</h3>
+          ${preview ? `<div class="promote-preview">${preview}</div>` : ''}
+          <form class="promote-form" onsubmit="${onsubmitAttr}">
+            <div class="field"><label for="pb-start">开始日期</label><input id="pb-start" type="date" required value="${fmtInput(start)}" /></div>
+            <div class="field"><label for="pb-end">结束日期</label><input id="pb-end" type="date" required value="${fmtInput(end)}" /></div>
+            <div class="field"><label for="pb-service">服务</label><select id="pb-service">${serviceOpts}</select></div>
+            <div class="field"><label for="pb-status">状态</label><select id="pb-status">${statusOpts}</select></div>
+            <div class="field full"><label for="pb-notes">备注</label><textarea id="pb-notes" placeholder="例如：晚上 6 点送来；需要喂药；已收 $25 定金">${escapeHtml(notes)}</textarea></div>
+            <div class="field"><label for="pb-price">总价 (USD)</label><input id="pb-price" type="number" min="0" step="1" placeholder="60" value="${escapeHtml(priceTotal)}" /></div>
+            <div class="field"><label for="pb-deposit"><input id="pb-deposit" type="checkbox" ${depositPaid ? 'checked' : ''} style="margin-right:6px" />已收定金</label></div>
+            <div class="row" style="grid-column:1/-1;display:flex;gap:8px;margin-top:10px">
+              <button type="button" onclick="closeSubscribeModal()">取消</button>
+              <button type="submit" class="primary" id="pb-submit">${submitLabel}</button>
+            </div>
+            <p id="pb-err" style="grid-column:1/-1;margin:6px 0 0;color:#b5381b;font-size:12px;min-height:1em"></p>
+          </form>
+        </div>`;
+      modal.classList.add('open');
+    }
+
+    async function submitBookingForm(ev, mode, id) {
+      ev.preventDefault();
+      const startInput = document.getElementById('pb-start').value;
+      const endInput = document.getElementById('pb-end').value;
+      const service = document.getElementById('pb-service').value || undefined;
+      const status = document.getElementById('pb-status').value;
+      const notes = document.getElementById('pb-notes').value.trim();
+      const priceRaw = document.getElementById('pb-price').value.trim();
+      const priceTotal = priceRaw === '' ? undefined : Number(priceRaw);
+      const depositPaid = document.getElementById('pb-deposit').checked;
+      const errEl = document.getElementById('pb-err');
+      const submitBtn = document.getElementById('pb-submit');
+
+      const startMs = new Date(startInput + 'T00:00:00Z').getTime();
+      const endMs = new Date(endInput + 'T00:00:00Z').getTime();
+      if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) { errEl.textContent = '日期格式错误'; return; }
+      if (endMs < startMs) { errEl.textContent = '结束日期不能早于开始日期'; return; }
+
+      submitBtn.disabled = true;
+      const orig = submitBtn.textContent;
+      submitBtn.textContent = mode === 'edit' ? '保存中…' : '创建中…';
+      errEl.textContent = '';
+
+      try {
+        let url, body;
+        if (mode === 'edit') {
+          url = '/api/bookings?action=update';
+          body = { bookingId: id, startMs, endMs, service, status, notes: notes || undefined, priceTotal, depositPaid };
+        } else if (mode === 'personal') {
+          // Personal block: fixed customerName + customerContact, no price, service='off'.
+          url = '/api/bookings';
+          body = {
+            startMs, endMs,
+            customerName: 'Personal (休息)',
+            customerContact: '—',
+            service: 'off',
+            status: 'confirmed',
+            notes: notes || undefined,
+          };
+        } else {
+          url = '/api/bookings';
+          body = { inquiryId: id, startMs, endMs, service, status, notes: notes || undefined, priceTotal, depositPaid };
+        }
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+          body: JSON.stringify(body),
+        });
+        const respBody = await res.json().catch(() => ({}));
+        if (!res.ok || !respBody.ok) throw new Error(respBody.error || `HTTP ${res.status}`);
+        const msg = mode === 'edit' ? '✏️ 预订已更新。'
+                  : mode === 'personal' ? '🚫 休息日已保存。这些天不会出现预订冲突。'
+                  : '✅ 预订已创建。ICS 订阅会在 5 分钟内更新。';
+        addAgentMessage(msg);
+        closeSubscribeModal();
+        await refreshData();
+        renderCalendar();
+      } catch (err) {
+        const prefix = mode === 'edit' ? '保存失败: ' : mode === 'personal' ? '保存休息日失败: ' : '创建失败: ';
+        errEl.textContent = prefix + err.message;
+        submitBtn.disabled = false;
+        submitBtn.textContent = orig;
+      }
+    }
+
+    // ============== PERSONAL BLOCK ==============
+    // Mom blocks her own days (vacation, doctor, off). Stored as a booking with
+    // customerName="Personal (休息)" + service="off" + no price. Naturally excluded
+    // from revenue/tax compute because it has no priceTotal. Shows gray on calendar.
+    function isPersonalBlock(b) {
+      return (b?.service === 'off') || /^Personal /.test(b?.customerName || '');
+    }
+
+    function openPersonalBlockModal(prefillKey) {
+      const today = prefillKey ? new Date(prefillKey + 'T00:00:00Z') : new Date();
+      const fmtInput = (d) => d.toISOString().slice(0, 10);
+
+      let modal = document.getElementById('cal-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'cal-modal';
+        modal.className = 'cal-modal';
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeSubscribeModal(); });
+        document.body.appendChild(modal);
+      }
+      modal.innerHTML = `
+        <div class="cal-modal-body" style="max-width:460px">
+          <h3>🚫 添加个人休息日</h3>
+          <p style="font-size:12px;color:var(--text-secondary);margin:0 0 10px">这些日子会显示为<strong>灰色</strong>（不可预订）。不计入收入。只有你自己看得到原因。</p>
+          <form class="promote-form" onsubmit="submitBookingForm(event, 'personal', '')">
+            <div class="field"><label for="pb-start">开始日期</label><input id="pb-start" type="date" required value="${fmtInput(today)}" /></div>
+            <div class="field"><label for="pb-end">结束日期</label><input id="pb-end" type="date" required value="${fmtInput(today)}" /></div>
+            <div class="field full"><label for="pb-notes">原因 (可选，仅自己可见)</label><input id="pb-notes" type="text" placeholder="例如：度假 / 医生 / 家人事情" /></div>
+            <!-- hidden placeholders so submitBookingForm's getElementById calls still work -->
+            <select id="pb-service" style="display:none"><option value="off" selected>off</option></select>
+            <select id="pb-status" style="display:none"><option value="confirmed" selected>confirmed</option></select>
+            <input id="pb-price" type="hidden" value="" />
+            <input id="pb-deposit" type="checkbox" style="display:none" />
+            <div class="row" style="grid-column:1/-1;display:flex;gap:8px;margin-top:10px">
+              <button type="button" onclick="closeSubscribeModal()">取消</button>
+              <button type="submit" class="primary" id="pb-submit">保存休息日</button>
+            </div>
+            <p id="pb-err" style="grid-column:1/-1;margin:6px 0 0;color:#b5381b;font-size:12px;min-height:1em"></p>
+          </form>
+        </div>`;
+      modal.classList.add('open');
+    }
+
+    // ============== ICAL SUBSCRIPTION (mom's personal Google Calendar as busy blocks) ==============
+    // Secret iCal URL lives only in localStorage (single-device) — never in our DB.
+    // Server /api/ical-proxy fetches + parses, returns a 90-day window of busy blocks.
+    // NOTE: `externalBlocks` and `ICAL_URL_KEY` are declared at the top of the script
+    // with other globals to avoid any Temporal Dead Zone risk if refreshData runs
+    // before this block (e.g. after localStorage-cached login triggers refreshData
+    // at page load, before all script lines have executed).
+
+    function openIcalSubscriptionModal() {
+      const saved = localStorage.getItem(ICAL_URL_KEY) || '';
+      let modal = document.getElementById('cal-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'cal-modal';
+        modal.className = 'cal-modal';
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeSubscribeModal(); });
+        document.body.appendChild(modal);
+      }
+      modal.innerHTML = `
+        <div class="cal-modal-body" style="max-width:560px">
+          <h3>📅 订阅你的 Google 日历（作为不可用时段）</h3>
+          <p style="font-size:13px;color:var(--text-secondary);margin:4px 0">把你的 Google 日历里的私人安排 (旅行、医生、家人事) 自动标注为<strong>不可预订</strong>。</p>
+          <ol style="font-size:13px;line-height:1.6;padding-left:20px;margin:10px 0;color:var(--text-primary)">
+            <li>在 Google 日历 (<a href="https://calendar.google.com" target="_blank">calendar.google.com</a>) 左边找到你的日历 → 点 <strong>⋮</strong> → <strong>设置和共享</strong></li>
+            <li>滚到 <strong>集成日历</strong> → 复制 <strong>iCal 格式的私密地址</strong></li>
+            <li>粘贴到下面</li>
+          </ol>
+          <input id="ical-url" type="url" placeholder="https://calendar.google.com/calendar/ical/.../private-.../basic.ics"
+            value="${escapeHtml(saved)}"
+            style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font:11px ui-monospace,monospace;margin:6px 0" />
+          <p style="font-size:11px;color:var(--text-secondary);margin:4px 0">🔒 这个链接只保存在你这台设备上 (localStorage)，不上传到我们的数据库。</p>
+          <div class="row" style="display:flex;gap:8px;margin-top:12px">
+            <button type="button" onclick="closeSubscribeModal()">取消</button>
+            ${saved ? '<button type="button" onclick="clearIcalUrl()" style="color:#b5381b">清除</button>' : ''}
+            <button type="button" class="primary" onclick="saveIcalUrl()">保存 &amp; 同步</button>
+          </div>
+          <p id="ical-err" style="margin:6px 0 0;color:#b5381b;font-size:12px;min-height:1em"></p>
+        </div>`;
+      modal.classList.add('open');
+    }
+
+    async function saveIcalUrl() {
+      const input = document.getElementById('ical-url');
+      const errEl = document.getElementById('ical-err');
+      const url = (input.value || '').trim();
+      if (!url) { errEl.textContent = '请粘贴 iCal URL'; return; }
+      if (!/^https:\/\/calendar\.google\.com\/calendar\/ical\//i.test(url) &&
+          !/\.ics(\?|$)/i.test(url)) {
+        errEl.textContent = '链接格式不对。应该以 https://calendar.google.com/calendar/ical/ 开头，或 .ics 结尾。';
+        return;
+      }
+      localStorage.setItem(ICAL_URL_KEY, url);
+      errEl.textContent = '已保存，正在同步…';
+      const ok = await loadExternalBlocks();
+      if (ok) {
+        addAgentMessage(`📅 已同步 ${externalBlocks.length} 条个人日历事件。冲突检测会自动包含这些时段。`);
+        closeSubscribeModal();
+        renderCalendar();
+      } else {
+        errEl.textContent = '同步失败。链接可能无效，或 Google 日历拒绝访问。';
+      }
+    }
+
+    function clearIcalUrl() {
+      localStorage.removeItem(ICAL_URL_KEY);
+      externalBlocks = [];
+      addAgentMessage('已清除个人日历订阅。');
+      closeSubscribeModal();
+      renderCalendar();
+    }
+
+    async function loadExternalBlocks() {
+      const url = localStorage.getItem(ICAL_URL_KEY);
+      if (!url) { externalBlocks = []; return true; }
+      try {
+        const res = await fetch('/api/ical-proxy', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+          body: JSON.stringify({ url }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.ok) { console.warn('ical-proxy err:', body.error); return false; }
+        externalBlocks = body.events || [];
+        return true;
+      } catch (err) {
+        console.warn('ical-proxy fetch failed:', err);
+        return false;
+      }
+    }
+
+    // ============== REVENUE + CSV EXPORT ==============
+    // Returns true if the booking's [startMs, endMs] range intersects the given (year, month).
+    // Uses UTC boundaries to match how bookings are stored (UTC midnight).
+    function bookingIntersectsMonth(b, year, month) {
+      if (b.status === 'cancelled') return false;
+      const monthStart = Date.UTC(year, month, 1);
+      const monthEnd = Date.UTC(year, month + 1, 0, 23, 59, 59, 999);
+      return b.startMs <= monthEnd && b.endMs >= monthStart;
+    }
+
+    function showRevenueModal(year, month) {
+      const bookingsThisMonth = confirmedBookings.filter((b) => bookingIntersectsMonth(b, year, month));
+      const confirmedOnly = bookingsThisMonth.filter((b) => b.status === 'confirmed');
+      const tentativeOnly = bookingsThisMonth.filter((b) => b.status === 'tentative');
+      const total = confirmedOnly.reduce((s, b) => s + (Number.isFinite(b.priceTotal) ? b.priceTotal : 0), 0);
+      const tentativeTotal = tentativeOnly.reduce((s, b) => s + (Number.isFinite(b.priceTotal) ? b.priceTotal : 0), 0);
+      const depositPaidTotal = confirmedOnly.filter((b) => b.depositPaid).length;
+      const missingPrice = confirmedOnly.filter((b) => !Number.isFinite(b.priceTotal));
+
+      // By-service breakdown
+      const byService = {};
+      for (const b of confirmedOnly) {
+        const s = b.service || 'other';
+        byService[s] = byService[s] || { count: 0, sum: 0 };
+        byService[s].count += 1;
+        byService[s].sum += Number.isFinite(b.priceTotal) ? b.priceTotal : 0;
+      }
+      const serviceLabel = (s) => ({ boarding:'过夜寄养', daycare:'日托', walk:'遛狗', dropin:'上门探望', other:'其他' }[s] || s);
+
+      let modal = document.getElementById('cal-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'cal-modal';
+        modal.className = 'cal-modal';
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeSubscribeModal(); });
+        document.body.appendChild(modal);
+      }
+      const monthName = `${year}年${month + 1}月`;
+
+      const rows = bookingsThisMonth
+        .slice()
+        .sort((a, b) => a.startMs - b.startMs)
+        .map((b) => {
+          const range = new Date(b.startMs).toISOString().slice(5, 10).replace('-', '/') + '–' +
+                        new Date(b.endMs).toISOString().slice(5, 10).replace('-', '/');
+          const statusBadge = b.status === 'confirmed' ? '' : ` <span style="color:#92400e;font-size:10px">(${b.status})</span>`;
+          const price = Number.isFinite(b.priceTotal) ? `$${b.priceTotal}` : '<span style="color:#92400e;font-size:11px">未填</span>';
+          const dep = b.depositPaid ? '✓' : '—';
+          return `<tr><td>${range}</td><td>${escapeHtml(b.customerName)}${statusBadge}</td><td>${escapeHtml(b.dogName || '')}</td><td>${escapeHtml(serviceLabel(b.service || 'other'))}</td><td style="text-align:center">${dep}</td><td class="price">${price}</td></tr>`;
+        }).join('');
+
+      const breakdown = Object.entries(byService).map(([svc, v]) =>
+        `<div class="card"><div class="label">${escapeHtml(serviceLabel(svc))}</div><div class="value">$${v.sum.toLocaleString()}</div><div style="font-size:11px;color:var(--text-secondary)">${v.count} 单</div></div>`
+      ).join('');
+
+      modal.innerHTML = `
+        <div class="cal-modal-body" style="max-width:720px;max-height:80vh;overflow:auto">
+          <h3>💰 ${monthName} 收入明细</h3>
+          <div class="rev-summary">
+            <div class="card"><div class="label">已确认收入</div><div class="value">$${total.toLocaleString()}</div><div style="font-size:11px;color:var(--text-secondary)">${confirmedOnly.length} 单</div></div>
+            <div class="card"><div class="label">暂定（未计入）</div><div class="value" style="color:#92400e">$${tentativeTotal.toLocaleString()}</div><div style="font-size:11px;color:var(--text-secondary)">${tentativeOnly.length} 单</div></div>
+            <div class="card"><div class="label">定金已收</div><div class="value">${depositPaidTotal}/${confirmedOnly.length}</div></div>
+            ${missingPrice.length ? `<div class="card" style="background:#fef3c7"><div class="label">价格未填</div><div class="value" style="color:#92400e">${missingPrice.length}</div><div style="font-size:11px;color:#92400e">收入可能低估</div></div>` : ''}
+          </div>
+          ${breakdown ? `<div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;margin:8px 0 6px">按服务分类</div><div class="rev-summary">${breakdown}</div>` : ''}
+          ${bookingsThisMonth.length === 0
+            ? `<div class="rev-empty">这个月还没有预订。</div>`
+            : `<table class="rev-table"><thead><tr><th>日期</th><th>客户</th><th>狗狗</th><th>服务</th><th style="text-align:center">定金</th><th style="text-align:right">价格</th></tr></thead><tbody>${rows}</tbody></table>`
+          }
+          <div class="row" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button onclick="closeSubscribeModal()">关闭</button>
+            <button onclick="downloadBookingsCsv(${year}, ${month})">📄 本月 CSV</button>
+            <button onclick="showTaxYearModal(${year})" class="primary">📊 全年税务报告</button>
+          </div>
+          <p style="margin-top:10px;font-size:11px;color:var(--text-secondary)">只计入已确认 + 已填价格的预订。暂定单和未填价的单子不算入本月收入。</p>
+        </div>`;
+      modal.classList.add('open');
+    }
+
+    // ============== TAX YEAR EXPORT ==============
+    // Year-end deliverable for Schedule C: gross receipts (line 1), booking count,
+    // by-service + by-month breakdown, deposits reconciliation, holiday-rate flag.
+    // Output: an on-screen summary mom can screenshot + a full-year CSV file
+    // Homen can drop into tax prep software.
+    function bookingYearOverlap(b, year) {
+      const yStart = Date.UTC(year, 0, 1);
+      const yEnd = Date.UTC(year, 11, 31, 23, 59, 59, 999);
+      return b.startMs <= yEnd && b.endMs >= yStart;
+    }
+
+    function computeYearSummary(year) {
+      const all = confirmedBookings.filter((b) => b.status !== 'cancelled' && bookingYearOverlap(b, year));
+      const confirmed = all.filter((b) => b.status === 'confirmed');
+      const priced = confirmed.filter((b) => Number.isFinite(b.priceTotal));
+      const gross = priced.reduce((s, b) => s + b.priceTotal, 0);
+      const missingPrice = confirmed.length - priced.length;
+      const depositCount = confirmed.filter((b) => b.depositPaid).length;
+      const serviceLabel = (s) => ({ boarding: '过夜寄养', daycare: '日托', walk: '遛狗', dropin: '上门探望', other: '其他' }[s] || s);
+
+      // By service
+      const byService = {};
+      for (const b of priced) {
+        const s = b.service || 'other';
+        byService[s] = byService[s] || { count: 0, sum: 0 };
+        byService[s].count++;
+        byService[s].sum += b.priceTotal;
+      }
+
+      // By month (12 rows, always)
+      const byMonth = new Array(12).fill(null).map(() => ({ count: 0, sum: 0, unpriced: 0 }));
+      for (const b of confirmed) {
+        // Attribute each booking to its start-month (cash-basis-ish, matches iCal rendering).
+        const mi = new Date(b.startMs).getUTCMonth();
+        byMonth[mi].count++;
+        if (Number.isFinite(b.priceTotal)) byMonth[mi].sum += b.priceTotal;
+        else byMonth[mi].unpriced++;
+      }
+
+      // Holiday-rate flagging: start-date falls on a known high-surcharge day.
+      const holidayDates = holidayDatesFor(year);
+      const holidayBookings = confirmed.filter((b) => {
+        const start = new Date(b.startMs).toISOString().slice(0, 10);
+        const end = new Date(b.endMs).toISOString().slice(0, 10);
+        return holidayDates.some((h) => h >= start && h <= end);
+      });
+
+      // Average + median (on priced only).
+      const prices = priced.map((b) => b.priceTotal).sort((a, b) => a - b);
+      const avg = prices.length ? Math.round(gross / prices.length) : 0;
+      const median = prices.length
+        ? (prices.length % 2
+            ? prices[(prices.length - 1) / 2]
+            : Math.round((prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2))
+        : 0;
+
+      return { year, gross, confirmed, priced, missingPrice, depositCount, byService, byMonth, holidayBookings, avg, median, serviceLabel };
+    }
+
+    function holidayDatesFor(year) {
+      // Matches operations/03_pricing_and_payment.md: Thanksgiving, Christmas Eve/Day,
+      // New Year's Eve/Day, July 4. Simple mapping — Thanksgiving handled via lookup.
+      const tg = { 2024: '2024-11-28', 2025: '2025-11-27', 2026: '2026-11-26', 2027: '2027-11-25', 2028: '2028-11-23' };
+      return [
+        `${year}-01-01`, `${year}-07-04`, `${year}-12-24`, `${year}-12-25`, `${year}-12-31`,
+        tg[year] || `${year}-11-25`,
+      ];
+    }
+
+    function showTaxYearModal(defaultYear) {
+      const thisYear = new Date().getUTCFullYear();
+      const years = [];
+      for (let y = thisYear + 1; y >= 2024; y--) years.push(y);
+      const yearOpts = years.map((y) => `<option value="${y}" ${y === defaultYear ? 'selected' : ''}>${y}</option>`).join('');
+
+      let modal = document.getElementById('cal-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'cal-modal';
+        modal.className = 'cal-modal';
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeSubscribeModal(); });
+        document.body.appendChild(modal);
+      }
+      modal.innerHTML = `
+        <div class="cal-modal-body" style="max-width:760px;max-height:85vh;overflow:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <h3 style="margin:0">📊 全年税务报告</h3>
+            <select id="tax-year-select" onchange="renderTaxYearBody(+this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px">${yearOpts}</select>
+          </div>
+          <div id="tax-year-body"></div>
+        </div>`;
+      modal.classList.add('open');
+      renderTaxYearBody(defaultYear);
+    }
+
+    function renderTaxYearBody(year) {
+      const S = computeYearSummary(year);
+      const body = document.getElementById('tax-year-body');
+      const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+      const monthRows = S.byMonth.map((m, i) =>
+        `<tr><td>${monthNames[i]}</td><td style="text-align:right">${m.count}</td><td class="price">${m.sum ? '$' + m.sum.toLocaleString() : '—'}</td><td style="text-align:right;color:${m.unpriced ? '#92400e' : 'var(--text-secondary)'};font-size:11px">${m.unpriced || ''}</td></tr>`
+      ).join('');
+      const serviceRows = Object.entries(S.byService).map(([svc, v]) =>
+        `<div class="card"><div class="label">${S.serviceLabel(svc)}</div><div class="value">$${v.sum.toLocaleString()}</div><div style="font-size:11px;color:var(--text-secondary)">${v.count} 单</div></div>`
+      ).join('');
+
+      body.innerHTML = `
+        <div class="rev-summary">
+          <div class="card" style="background:#f0fdf4"><div class="label">毛收入 (Schedule C Line 1)</div><div class="value" style="color:#166534">$${S.gross.toLocaleString()}</div></div>
+          <div class="card"><div class="label">已确认订单</div><div class="value">${S.confirmed.length}</div><div style="font-size:11px;color:var(--text-secondary)">其中 ${S.priced.length} 有价格</div></div>
+          <div class="card"><div class="label">均价 / 中位数</div><div class="value">$${S.avg}</div><div style="font-size:11px;color:var(--text-secondary)">中位数 $${S.median}</div></div>
+          <div class="card"><div class="label">定金已收</div><div class="value">${S.depositCount}</div><div style="font-size:11px;color:var(--text-secondary)">/ ${S.confirmed.length} 单</div></div>
+          ${S.missingPrice ? `<div class="card" style="background:#fef3c7"><div class="label">价格未填</div><div class="value" style="color:#92400e">${S.missingPrice}</div><div style="font-size:11px;color:#92400e">收入可能低估</div></div>` : ''}
+          ${S.holidayBookings.length ? `<div class="card"><div class="label">节日预订</div><div class="value">${S.holidayBookings.length}</div><div style="font-size:11px;color:var(--text-secondary)">应按 +50% 计</div></div>` : ''}
+        </div>
+        ${serviceRows ? `<div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 6px">按服务分类</div><div class="rev-summary">${serviceRows}</div>` : ''}
+        <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 6px">按月分布</div>
+        <table class="rev-table">
+          <thead><tr><th>月份</th><th style="text-align:right">订单</th><th style="text-align:right">收入</th><th style="text-align:right;font-size:10px">未填价</th></tr></thead>
+          <tbody>${monthRows}</tbody>
+          <tfoot><tr style="font-weight:600;background:var(--bg-secondary)"><td>合计</td><td style="text-align:right">${S.confirmed.length}</td><td class="price">$${S.gross.toLocaleString()}</td><td></td></tr></tfoot>
+        </table>
+        <div class="row" style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          <button onclick="closeSubscribeModal()">关闭</button>
+          <button onclick="downloadYearCsv(${year})" class="primary">📥 下载 ${year} 全年 CSV</button>
+        </div>
+        <p style="margin-top:10px;font-size:11px;color:var(--text-secondary)">
+          <strong>Schedule C 提示：</strong>毛收入 ($${S.gross.toLocaleString()}) → Part I Line 1. 保留本页作为凭证。
+          未填价订单不计入 — 填完再导出以避免低估。暂定和取消订单不计入。
+          遛狗业务不属于 SSTB，QBI 扣除无收入门槛限制。
+        </p>`;
+    }
+
+    function downloadYearCsv(year) {
+      const S = computeYearSummary(year);
+      const rows = S.confirmed.slice().sort((a, b) => a.startMs - b.startMs);
+      const esc = (v) => {
+        const s = v == null ? '' : String(v);
+        return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      };
+      const header = ['start_date', 'end_date', 'customer_name', 'customer_contact', 'dog_name', 'service', 'status', 'price_usd', 'deposit_paid', 'notes', 'created_from'];
+      const lines = [header.join(',')];
+      for (const b of rows) {
+        lines.push([
+          new Date(b.startMs).toISOString().slice(0, 10),
+          new Date(b.endMs).toISOString().slice(0, 10),
+          esc(b.customerName),
+          esc(b.customerContact),
+          esc(b.dogName || ''),
+          esc(b.service || ''),
+          esc(b.status),
+          Number.isFinite(b.priceTotal) ? b.priceTotal : '',
+          b.depositPaid ? 'Y' : '',
+          esc(b.notes || ''),
+          esc(b.createdFrom || ''),
+        ].join(','));
+      }
+      // Aggregate section at the end — commented column for Schedule C mapping.
+      lines.push('');
+      lines.push(`# AGGREGATE ${year} — generated ${new Date().toISOString()}`);
+      lines.push(`# Gross receipts (Schedule C Part I Line 1),${S.gross}`);
+      lines.push(`# Confirmed bookings,${S.confirmed.length}`);
+      lines.push(`# Priced bookings,${S.priced.length}`);
+      lines.push(`# Missing price (income likely understated),${S.missingPrice}`);
+      lines.push(`# Deposits received,${S.depositCount}`);
+      lines.push(`# Average booking (priced only),${S.avg}`);
+      lines.push(`# Median booking (priced only),${S.median}`);
+      lines.push(`# Holiday-rate bookings (review +50% surcharge),${S.holidayBookings.length}`);
+      lines.push('');
+      lines.push('# By-service breakdown:');
+      for (const [svc, v] of Object.entries(S.byService)) {
+        lines.push(`# ${S.serviceLabel(svc)} (${svc}),${v.sum},${v.count}`);
+      }
+      lines.push('');
+      lines.push('# By-month breakdown:');
+      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      for (let i = 0; i < 12; i++) {
+        lines.push(`# ${monthNames[i]} ${year},${S.byMonth[i].sum},${S.byMonth[i].count}`);
+      }
+
+      const csv = '\uFEFF' + lines.join('\r\n') + '\r\n';
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pawpaw-bookings-${year}-YEAR-schedule-c.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      addAgentMessage(`已导出 ${year} 全年 ${rows.length} 条预订到 CSV（含 Schedule C 汇总）。`);
+    }
+
+    function downloadBookingsCsv(year, month) {
+      const rows = confirmedBookings
+        .filter((b) => bookingIntersectsMonth(b, year, month))
+        .slice()
+        .sort((a, b) => a.startMs - b.startMs);
+
+      const header = ['start_date', 'end_date', 'customer_name', 'customer_contact', 'dog_name', 'service', 'status', 'price_usd', 'deposit_paid', 'notes', 'created_from'];
+      const esc = (v) => {
+        const s = v == null ? '' : String(v);
+        return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      };
+      const lines = [header.join(',')];
+      for (const b of rows) {
+        lines.push([
+          new Date(b.startMs).toISOString().slice(0, 10),
+          new Date(b.endMs).toISOString().slice(0, 10),
+          esc(b.customerName),
+          esc(b.customerContact),
+          esc(b.dogName || ''),
+          esc(b.service || ''),
+          esc(b.status),
+          Number.isFinite(b.priceTotal) ? b.priceTotal : '',
+          b.depositPaid ? 'Y' : '',
+          esc(b.notes || ''),
+          esc(b.createdFrom || ''),
+        ].join(','));
+      }
+      // BOM so Excel opens UTF-8 properly.
+      const csv = '\uFEFF' + lines.join('\r\n') + '\r\n';
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const yyyymm = `${year}-${String(month + 1).padStart(2, '0')}`;
+      a.href = url;
+      a.download = `pawpaw-bookings-${yyyymm}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      addAgentMessage(`已导出 ${rows.length} 条预订到 CSV（${yyyymm}）。`);
+    }
+
+    // ============== SHARE STAY LINK (thank-you page) ==============
+    // Builds the /stay.html?t=<bookingId> URL and opens a modal letting mom:
+    //   • Copy the URL
+    //   • Send via native share sheet (iOS/Android)
+    //   • Text it directly to the customer if their contact is a phone number
+    function shareStayLink(bookingId) {
+      const b = confirmedBookings.find((x) => (x._id || x.id) === bookingId);
+      if (!b) { alert('预订未找到'); return; }
+      const url = `${location.origin}/stay.html?t=${bookingId}`;
+      const firstName = (b.customerName || '').split(/\s+/)[0] || '';
+      const dog = (b.dogName || '').split(/[,，]/)[0] || 'your dog';
+
+      let modal = document.getElementById('cal-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'cal-modal';
+        modal.className = 'cal-modal';
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeSubscribeModal(); });
+        document.body.appendChild(modal);
+      }
+
+      const supportsNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
+      const isPhone = looksLikePhone(b.customerContact || '');
+      const smsBody = `Hi ${firstName}! Just sharing this little memory from ${dog}'s stay with us 🐾 ${url} — Yan`;
+      const smsUrl = isPhone ? `sms:${phoneToE164(b.customerContact)}?&body=${encodeURIComponent(smsBody)}` : null;
+
+      modal.innerHTML = `
+        <div class="cal-modal-body" style="max-width:460px">
+          <h3>📤 分享纪念页</h3>
+          <p style="font-size:13px;color:var(--text-secondary);margin:0 0 10px">
+            给 <strong>${escapeHtml(firstName)}</strong> 发送一个小纪念页 —— 里面有 <strong>${escapeHtml(dog)}</strong> 的寄养信息。客户也可以转发给家人。
+          </p>
+          <div class="url-box">${escapeHtml(url)}</div>
+          <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <button onclick="closeSubscribeModal()">关闭</button>
+            <button onclick="copyCalendarUrl('${url}')" class="primary">📋 复制链接</button>
+            ${supportsNativeShare ? `<button onclick="navigator.share({title:'Paw Paw Pet Care', url:'${url}'}).catch(()=>{})">📤 系统分享</button>` : ''}
+            ${smsUrl ? `<button onclick="location.href='${smsUrl}'">📱 发短信</button>` : ''}
+          </div>
+          <p style="margin-top:12px;font-size:11px;color:var(--text-secondary)">
+            💡 在客户接完狗狗几个小时后发这个链接，温馨感翻倍，转发率也高。
+          </p>
+        </div>`;
+      modal.classList.add('open');
+    }
+
+    async function cancelBooking(bookingId) {
+      if (!confirm('确定取消这个预订？客户的日期会重新显示为未确认询问。')) return;
+      try {
+        const res = await fetch('/api/bookings?action=cancel', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
+          body: JSON.stringify({ bookingId }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body.ok) throw new Error(body.error || `HTTP ${res.status}`);
+        addAgentMessage('预订已取消。');
+        await refreshData();
+        renderCalendar();
+      } catch (err) {
+        alert('取消失败: ' + err.message);
+      }
+    }
+
+    function showCalendarDay(key) {
+      const panel = document.getElementById('cal-day-panel');
+      if (!panel) return;
+      const dayInquiries = inquiries.filter((i) => {
+        const d = new Date(i.timestamp || 0);
+        return d.toISOString().slice(0, 10) === key;
+      });
+      const [y, m, d] = key.split('-');
+      // UTC boundaries — must match how startMs/endMs are stored.
+      const dayStart = Date.UTC(+y, +m - 1, +d);
+      const dayEnd = dayStart + 86_399_999;
+      const promotedIds = new Set(confirmedBookings.filter((b) => !isPersonalBlock(b)).map((b) => String(b.inquiryId || '')));
+      const dayAll = confirmedBookings.filter((b) => b.status !== 'cancelled' && b.startMs <= dayEnd && b.endMs >= dayStart);
+      const dayCustomer = dayAll.filter((b) => !isPersonalBlock(b));
+      const dayPersonal = dayAll.filter((b) => isPersonalBlock(b));
+      const dayExternal = externalBlocks.filter((ev) => ev.startMs <= dayEnd && ev.endMs >= dayStart);
+      const bookings = inquiries
+        .filter((i) => !promotedIds.has(String(i._id || i.id || '')))
+        .filter((i) => parseDatesInMonth(i.dates || '', +y, +m - 1).includes(key));
+
+      let html = `<h4>${y}年${+m}月${+d}日</h4>`;
+      if (dayInquiries.length === 0 && bookings.length === 0 && dayCustomer.length === 0 && dayPersonal.length === 0 && dayExternal.length === 0) {
+        html += `<p style="color:var(--text-secondary);font-size:13px">这一天没有咨询或预订</p>`;
+        html += `<button onclick="openPersonalBlockModal('${key}')" style="margin-top:10px;background:#f3f4f6;border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;color:var(--text-primary);cursor:pointer">🚫 标记这天为休息日</button>`;
+      } else {
+        if (dayCustomer.length) {
+          const hasOverlap = dayCustomer.length + bookings.length >= 2 || (dayCustomer.length >= 1 && (dayPersonal.length + dayExternal.length) >= 1);
+          html += `<div style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px">✅ 已确认预订${hasOverlap ? ' <span style="color:#92400e;font-weight:600">⚠️ 同日还有其他安排</span>' : ''}</div>`;
+          for (const b of dayCustomer) {
+            const range = new Date(b.startMs).toISOString().slice(5,10).replace('-','/') + '–' + new Date(b.endMs).toISOString().slice(5,10).replace('-','/');
+            const tag = `<span class="tag replied">${b.status === 'tentative' ? '暂定' : '已确认'}</span>`;
+            const price = b.priceTotal != null ? ` <span style="color:#16a34a;font-weight:600">$${b.priceTotal}</span>` : '';
+            const deposit = b.depositPaid ? ' <span style="color:#16a34a;font-size:10px">·定金✓</span>' : '';
+            const shareBtn = `<button onclick="shareStayLink('${b._id || b.id}')" style="background:none;border:0;color:#16a34a;cursor:pointer;font-size:11px;margin-left:6px" title="分享纪念页给客户 / 家人">📤 纪念页</button>`;
+            const editBtn = `<button onclick='openBookingModal({mode:"edit", bookingId:"${b._id || b.id}"})' style="background:none;border:0;color:#2563eb;cursor:pointer;font-size:11px;margin-left:6px">编辑</button>`;
+            const cancelBtn = `<button onclick="cancelBooking('${b._id || b.id}')" style="background:none;border:0;color:#b5381b;cursor:pointer;font-size:11px;margin-left:6px">取消</button>`;
+            html += `<div class="cal-day-item"><span class="name">${escapeHtml(b.customerName)} · ${escapeHtml(b.dogName || '')} · ${range}${price}${deposit}</span>${tag}${shareBtn}${editBtn}${cancelBtn}</div>`;
+          }
+        }
+        if (dayPersonal.length) {
+          html += `<div style="font-size:12px;color:var(--text-secondary);margin:12px 0 4px">🚫 个人休息日</div>`;
+          for (const b of dayPersonal) {
+            const range = new Date(b.startMs).toISOString().slice(5,10).replace('-','/') + '–' + new Date(b.endMs).toISOString().slice(5,10).replace('-','/');
+            const cancelBtn = `<button onclick="cancelBooking('${b._id || b.id}')" style="background:none;border:0;color:#b5381b;cursor:pointer;font-size:11px;margin-left:6px">取消休息</button>`;
+            html += `<div class="cal-day-item" style="background:#f9fafb"><span class="name" style="color:#6b7280">🚫 ${range}${b.notes ? ' · ' + escapeHtml(b.notes) : ''}</span>${cancelBtn}</div>`;
+          }
+        }
+        if (dayExternal.length) {
+          html += `<div style="font-size:12px;color:var(--text-secondary);margin:12px 0 4px">📅 个人日历事件</div>`;
+          for (const ev of dayExternal) {
+            html += `<div class="cal-day-item" style="background:#fafafa"><span class="name" style="color:#6b7280">📅 ${escapeHtml(ev.summary || '(无标题)')}</span><span class="tag" style="background:#e5e7eb;color:#374151">来自 Google</span></div>`;
+          }
+        }
+        if (dayInquiries.length) {
+          html += '<div style="font-size:12px;color:var(--text-secondary);margin:12px 0 4px">📥 当天的咨询</div>';
+          for (const i of dayInquiries) {
+            const tag = i.replied ? '<span class="tag replied">已回复</span>' : '<span class="tag new">待回复</span>';
+            html += `<div class="cal-day-item"><span class="name">${escapeHtml(i.name)} · ${escapeHtml(i.dog || '')}</span>${tag}</div>`;
+          }
+        }
+        if (bookings.length) {
+          const isConflict = bookings.length + dayConfirmed.length >= 2;
+          html += `<div style="font-size:12px;color:var(--text-secondary);margin:12px 0 4px">📅 未确认的询问${isConflict ? ' <span style="color:#92400e;font-weight:600">⚠️ 有冲突</span>' : ''}</div>`;
+          if (isConflict) {
+            html += '<div style="background:#fff8e6;border-left:3px solid #d97706;padding:8px 10px;margin-bottom:6px;font-size:12px;color:#92400e;border-radius:4px">这一天有多个预订请求 — 确认前请致电客户核实档期。</div>';
+          }
+          for (const i of bookings) {
+            const id = i._id || i.id;
+            const promoteBtn = `<button class="promote-btn" onclick="openPromoteModal('${id}')" title="确认这条询问为正式预订">✅ 确认为预订</button>`;
+            html += `<div class="cal-day-item ${isConflict ? 'conflict' : ''}"><span class="name">${escapeHtml(i.name)} · ${escapeHtml(i.dates || '')}</span><span class="tag ${isConflict ? 'conflict' : 'booking'}">${isConflict ? '冲突' : '询问'}</span>${promoteBtn}</div>`;
+          }
+        }
+      }
+      panel.innerHTML = html;
+      panel.classList.add('open');
+    }
+
+    // Parse free-text `dates` field and return YYYY-MM-DD keys that fall within the given month.
+    // Handles common patterns: "7/15", "July 15", "July 15-20", "7月15日", "12/1-12/5".
+    function parseDatesInMonth(text, year, month) {
+      if (!text) return [];
+      const keys = new Set();
+      const monthMap = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,sept:8,oct:9,nov:10,dec:11 };
+
+      const addRange = (m, startDay, endDay) => {
+        if (m !== month) return;
+        const last = new Date(year, month + 1, 0).getDate();
+        for (let d = Math.max(1, startDay); d <= Math.min(last, endDay || startDay); d++) {
+          keys.add(new Date(year, month, d).toISOString().slice(0, 10));
+        }
+      };
+
+      // Numeric: M/D or M/D-D or M/D-M/D
+      const numeric = text.matchAll(/(\d{1,2})\/(\d{1,2})(?:\s*[-–]\s*(?:(\d{1,2})\/)?(\d{1,2}))?/g);
+      for (const m of numeric) {
+        const m1 = +m[1] - 1;
+        const d1 = +m[2];
+        const m2 = m[3] ? +m[3] - 1 : m1;
+        const d2 = m[4] ? +m[4] : d1;
+        if (m1 === m2) addRange(m1, d1, d2);
+        else { addRange(m1, d1, 31); addRange(m2, 1, d2); }
+      }
+      // English month name
+      const english = text.toLowerCase().matchAll(/(jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec)[a-z]*\s+(\d{1,2})(?:\s*[-–]\s*(\d{1,2}))?/g);
+      for (const m of english) {
+        const mi = monthMap[m[1]];
+        if (mi == null) continue;
+        addRange(mi, +m[2], m[3] ? +m[3] : +m[2]);
+      }
+      // Chinese: M月D日 or M月D-D日
+      const chinese = text.matchAll(/(\d{1,2})月(\d{1,2})(?:\s*[-–~至到]\s*(\d{1,2}))?日?/g);
+      for (const m of chinese) {
+        const mi = +m[1] - 1;
+        addRange(mi, +m[2], m[3] ? +m[3] : +m[2]);
+      }
+      return [...keys];
+    }
+
+    function markAllRead() {
+      addAgentMessage('已将所有咨询标记为已读。');
+    }
+    
+    // Language flag emoji for an inquiry. Prefer detectedLang (ground truth from the
+    // translation step) over the form's lang hint (which is just 'en' or 'zh' from the
+    // landing page they happened to use).
+    function langFlag(i) {
+      // Prefer detectedLang (when it persists); fall back to `lang` which we now
+      // overload with the detection result server-side as a workaround for the
+      // optional-field-drop issue. Still fall back to 'en' as last resort.
+      const code = String(i.detectedLang || i.lang || 'en').toLowerCase();
+      const map = {
+        zh: '🇨🇳', en: '🇺🇸', es: '🇪🇸', vi: '🇻🇳', tl: '🇵🇭', ko: '🇰🇷', ja: '🇯🇵',
+        hi: '🇮🇳', fr: '🇫🇷', de: '🇩🇪', ru: '🇷🇺', pt: '🇵🇹', ar: '🌍',
+      };
+      return map[code] || '🌐';
+    }
+
+    function langName(code) {
+      return {
+        zh: '中文', en: 'English', es: 'Español', vi: 'Tiếng Việt', tl: 'Tagalog',
+        ko: '한국어', ja: '日本語', hi: 'हिन्दी', ar: 'العربية', fr: 'Français',
+        de: 'Deutsch', ru: 'Русский', pt: 'Português',
+      }[String(code || '').toLowerCase()] || code || '?';
+    }
+
+    // Resolve utm_source from an inquiry — prefer the dedicated field, fall back
+    // to parsing page_url query params (covers cases where the server-side write
+    // path stripped the optional field but preserved page_url).
+    function resolveUtmSource(i) {
+      if (i.utm_source) return i.utm_source;
+      if (i.page_url) {
+        try {
+          const u = new URL(i.page_url);
+          const s = u.searchParams.get('utm_source') || u.searchParams.get('ref');
+          if (s) return s.slice(0, 40);
+        } catch { /* malformed url — ignore */ }
+      }
+      return null;
+    }
+
+    // Pick an emoji that visually codes the attribution source so mom can scan
+    // the inbox and see "oh, 3 of these came from WeChat this week".
+    function sourceEmoji(src) {
+      const s = String(src || '').toLowerCase();
+      if (/wechat|weixin|moments|朋友圈/.test(s)) return '💬';
+      if (/nextdoor/.test(s)) return '🏘️';
+      if (/facebook|fb|instagram|ig/.test(s)) return '📘';
+      if (/flyer|print|poster/.test(s)) return '🖨️';
+      if (/google|gbp|gmb|search/.test(s)) return '🔍';
+      if (/yelp/.test(s)) return '⭐';
+      if (/referral|referrer|friend/.test(s)) return '🤝';
+      return '🏷️';
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    
+    function formatTime(ts) {
+      const d = new Date(ts);
+      const now = new Date();
+      const diff = (now - d) / 1000;
+      
+      if (diff < 60) return '刚刚';
+      if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+      if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+      return d.toLocaleDateString('zh-CN');
+    }
+    
+    // Auto-resize textarea
+    document.getElementById('chat-input')?.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    
+    // Auto-refresh every 30 seconds (only when logged in AND key still present)
+    let _refreshInterval = setInterval(() => {
+      if (!apiKey) return; // paused after 401
+      if (document.getElementById('app')?.classList.contains('logged-in')) {
+        refreshData();
+      }
+    }, 30000);
+  </script>
+</body>
+</html>

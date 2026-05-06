@@ -1,0 +1,29 @@
+# Vercel
+.vercel/
+
+# Env (never commit real secrets)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.production.local
+
+# Convex (auto-generated; consumers regenerate via `npx convex dev`)
+convex/_generated/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build artifacts
+dist/
+build/
+*.tsbuildinfo

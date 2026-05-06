@@ -1,0 +1,23 @@
+{
+  "name": "Paw Paw 编辑",
+  "short_name": "Paw Paw 编辑",
+  "description": "Edit Paw Paw Pet Care content",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf7ed",
+  "theme_color": "#1e3a2e",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%23fdf7ed'/%3E%3Ctext x='96' y='130' font-size='130' text-anchor='middle'%3E%F0%9F%90%BE%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "business",
+    "lifestyle"
+  ]
+}

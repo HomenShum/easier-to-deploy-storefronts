@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>Paw Paw Pet Care — Print Flyer (QR)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🐾%3C/text%3E%3C/svg%3E" />
+<style>
+  /*
+    Printable quarter-sheet (4.25" × 5.5") flyer optimized for:
+    - posting at local pet stores, vets, community boards
+    - handing to neighbors / at dog parks
+    - taping to apartment lobby bulletin boards
+
+    Two panels side by side when printed on US Letter, or single flyer at 4x6.
+    The @media print CSS removes browser chrome and centers the flyer.
+  */
+
+  :root {
+    --ink: #1e3a2e;
+    --cream: #fdf7ed;
+    --paw-gold: #d4a574;
+    --terra: #c85e3c;
+    --sage: #4a7c59;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'PingFang SC', 'Noto Sans SC', 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: #eee;
+    color: var(--ink);
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    min-height: 100vh;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+  .toolbar button, .toolbar a {
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: white;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink);
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+  }
+  .toolbar button.primary { background: var(--ink); color: white; border-color: var(--ink); }
+  .toolbar button:hover { background: #f5f5f0; }
+  .toolbar button.primary:hover { background: #2a5440; }
+
+  .flyer-wrap { display: flex; gap: 22px; flex-wrap: wrap; justify-content: center; }
+
+  /* The flyer itself: 4.25" × 5.5" at 300dpi = 1275 × 1650 px. We render
+     at 1:1 scale on screen (for preview) using CSS inches. */
+  .flyer {
+    width: 4.25in;
+    height: 5.5in;
+    background: var(--cream);
+    color: var(--ink);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 12px 32px -10px rgba(30,58,46,.3);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.35in 0.28in;
+    text-align: center;
+  }
+
+  /* Decorative paw watermarks */
+  .flyer::before, .flyer::after {
+    content: '🐾';
+    position: absolute;
+    font-size: 90px;
+    opacity: 0.06;
+    pointer-events: none;
+  }
+  .flyer::before { top: -12px; left: -12px; transform: rotate(-15deg); }
+  .flyer::after { bottom: -12px; right: -12px; transform: rotate(25deg); }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 0.12in;
+  }
+  .brand-mark {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--paw-gold), #e3bc8a);
+    display: grid; place-items: center;
+    font-size: 30px;
+    box-shadow: 0 4px 10px -3px rgba(212, 165, 116, .55);
+  }
+  .brand-name {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 26px;
+    line-height: 1.05;
+    margin-top: 8px;
+    color: var(--ink);
+  }
+  .brand-name em { font-style: italic; color: var(--sage); font-weight: 500; }
+  .brand-zh { font-size: 13px; color: var(--sage); margin-top: 2px; letter-spacing: .04em; }
+
+  .tagline {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.5;
+    margin: 0.08in 0 0.05in;
+    padding: 0 0.12in;
+  }
+  .tagline .en { display: block; opacity: .9; font-weight: 400; font-size: 11px; color: #5a6b5f; margin-top: 3px; }
+
+  .qr {
+    width: 1.85in; height: 1.85in;
+    background: white;
+    border: 1px solid rgba(30,58,46,.1);
+    border-radius: 10px;
+    padding: 6px;
+    margin: 0.12in 0 0.08in;
+    box-shadow: 0 6px 14px -6px rgba(30,58,46,.25);
+    display: grid; place-items: center;
+  }
+  .qr img { width: 100%; height: 100%; display: block; }
+  .qr-caption {
+    font-size: 11px;
+    color: var(--sage);
+    margin-bottom: 0.1in;
+  }
+  .qr-caption strong { color: var(--ink); }
+
+  .trust {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    width: 100%;
+    margin: 0.05in 0;
+    font-size: 10px;
+    color: var(--ink);
+  }
+  .trust .item {
+    background: rgba(255,255,255,.6);
+    border-radius: 8px;
+    padding: 6px 4px;
+    line-height: 1.2;
+  }
+  .trust .item .n { font-size: 14px; font-weight: 700; display: block; color: var(--terra); }
+
+  .phone {
+    margin-top: 0.1in;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--terra);
+    letter-spacing: -.01em;
+  }
+  .phone-label { font-size: 10px; font-weight: 400; color: var(--sage); display: block; margin-bottom: 2px; font-family: inherit; }
+
+  .foot {
+    margin-top: auto;
+    font-size: 10px;
+    color: var(--sage);
+    line-height: 1.4;
+    padding-top: 0.05in;
+  }
+  .foot .area { font-weight: 500; color: var(--ink); }
+
+  /* Print layout: one flyer per 4x6 sheet, centered, no other chrome. */
+  @media print {
+    @page { size: 4.25in 5.5in; margin: 0; }
+    body { background: white; padding: 0; display: block; min-height: auto; }
+    .toolbar, .print-hint { display: none !important; }
+    .flyer-wrap { gap: 0; }
+    .flyer {
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always;
+      margin: 0 auto;
+    }
+    .flyer:last-child { page-break-after: auto; }
+  }
+
+  .print-hint {
+    max-width: 460px;
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #555;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+  }
+  .print-hint strong { color: var(--ink); }
+  .print-hint ol { margin: 6px 0 0; padding-left: 22px; }
+  .print-hint li { margin: 3px 0; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button class="primary" onclick="window.print()">🖨️ 打印这张传单</button>
+  <button onclick="downloadPng()">📥 保存为 PNG</button>
+  <a href="/">← 返回主页</a>
+</div>
+
+<div class="print-hint">
+  <strong>建议张贴地点：</strong>
+  <ol>
+    <li>宠物用品店、宠物医院（问前台是否可以张贴）</li>
+    <li>社区公告栏（图书馆、咖啡店、公寓大堂）</li>
+    <li>附近狗公园（贴在信息栏或递给遛狗邻居）</li>
+    <li>小学门口、社区中心（家长接孩子时留意）</li>
+  </ol>
+  <p style="margin:10px 0 0;color:#888;font-size:12px">打印建议：4×6 寸相纸或厚卡纸，彩色打印。一页能印 4 张（US Letter 上对折再对折）。</p>
+</div>
+
+<div class="flyer-wrap">
+  <div class="flyer" id="flyer-main">
+    <div class="brand">
+      <div class="brand-mark">🐾</div>
+      <div class="brand-name">Paw Paw <em>Pet Care</em></div>
+      <div class="brand-zh">Castro Valley · 家庭式狗狗寄养</div>
+    </div>
+
+    <p class="tagline">
+      您的狗狗值得一个客厅，不是水泥围栏。
+      <span class="en">A calm home for your dog — not a kennel.</span>
+    </p>
+
+    <div class="qr" id="qr-box">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=2&data=https%3A%2F%2F<your-app>.vercel.app%2F%3Fref%3Dflyer" alt="QR code to <your-app>.vercel.app" crossorigin="anonymous" />
+    </div>
+    <div class="qr-caption">📱 <strong>扫一扫看主页</strong> · Scan for details</div>
+
+    <div class="trust">
+      <div class="item"><span class="n">6+</span>年照顾经验<br /><span style="color:#8a9b90">since 2018</span></div>
+      <div class="item"><span class="n">1-2</span>只狗狗同时<br /><span style="color:#8a9b90">dogs at a time</span></div>
+      <div class="item"><span class="n">SF</span>专业日托 2 年<br /><span style="color:#8a9b90">+ rescue exp.</span></div>
+    </div>
+
+    <div class="phone">
+      <span class="phone-label">短信预约 · Text to book</span>
+      415-823-0199
+    </div>
+
+    <div class="foot">
+      <span class="area">📍 服务区域</span>　·　Castro Valley · Hayward · San Leandro · San Lorenzo · I-580 旁边<br />
+      中英文接待 · Bilingual EN / 中文 · Free meet-and-greet 🐾
+    </div>
+  </div>
+</div>
+
+<script>
+  // "Save as PNG" — uses html2canvas if available, falls back to instructions.
+  async function downloadPng() {
+    if (typeof html2canvas === 'undefined') {
+      // Lazy-load from CDN on first click.
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      }).catch(() => {
+        alert('无法加载保存功能，请用浏览器的 打印 → 另存为 PDF 代替。');
+      });
+    }
+    try {
+      const el = document.getElementById('flyer-main');
+      const canvas = await html2canvas(el, {
+        scale: 3, // ~300dpi for print
+        backgroundColor: '#fdf7ed',
+        useCORS: true,
+        allowTaint: false,
+      });
+      const link = document.createElement('a');
+      link.download = 'paw-paw-pet-care-flyer.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      alert('保存失败：' + err.message + '\n\n可以改用浏览器菜单 → 打印 → 另存为 PDF。');
+    }
+  }
+</script>
+</body>
+</html>
