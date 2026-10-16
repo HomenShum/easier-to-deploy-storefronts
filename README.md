@@ -15,10 +15,11 @@ The four things this gives you, out of the box:
 
 The reason this template is "easy to deploy and maintain" is structural: **static structure ships through git, dynamic content lives in Convex.** The owner edits the dynamic content with a button on the live page. You ship code; they ship words and prices.
 
-> **Three companion docs:**
+> **Two companion docs:**
 > - [`SKILL.md`](SKILL.md) — 10-phase construction playbook (writing the code, with the auth state machine front-and-center)
 > - [`DEV_FLOW.md`](DEV_FLOW.md) — the meta-process: integration with [`parity-studio`](https://github.com/HomenShum/parity-studio) and [`easier-to-read-submissions`](https://github.com/HomenShum/easier-to-read-submissions), the 11-phase dev flow from blank-repo to human-tested production, scaling math (free tier → 1M customers/month with Temporal / Fargate / DuckDB / etc.), and interview-prep framing
-> - [`PUBLISH_CHECKLIST.md`](PUBLISH_CHECKLIST.md) — pre-flight before going public
+
+[README change history](CHANGELOG/docs/readme.md)
 
 ---
 
@@ -36,6 +37,10 @@ The *only* runtime services you need an account for are Vercel, Convex, Resend, 
 ---
 
 ## Quickstart
+
+Use Node.js 20 or newer, as declared in [package.json](package.json).
+
+These setup steps use real Convex/Vercel resources and Resend email configuration. No installation, provisioning, deployment or email test was executed for this documentation update.
 
 ```bash
 # 1. Clone
